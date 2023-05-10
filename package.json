@@ -4,6 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
+    "depcheck": "npx depcheck",
     "lint": "eslint . --ignore-path .gitignore --ext .js,.ts",
     "lint:fix": "npm run lint -- --fix",
     "lint:quiet": "npm run lint -- --quiet",
