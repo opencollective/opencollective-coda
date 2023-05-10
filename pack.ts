@@ -1,4 +1,5 @@
 import * as coda from "@codahq/packs-sdk";
+import exp = require("constants");
 export const pack = coda.newPack();
 
 // This code is in alpha and is meant for internal use in Open Collective at the moment.
@@ -250,11 +251,62 @@ const OrderSchema = coda.makeObjectSchema({
   displayProperty: "description",
 });
 
+const PercentilesSchema = coda.makeObjectSchema({
+  properties: {
+    sourceData: {
+      type: coda.ValueType.String,
+      description: "The source data of the percentiles.",
+    },
+    p10th: {
+      type: coda.ValueType.Number,
+      description: "The 10th percentile.",
+    },
+    p25th: {
+      type: coda.ValueType.Number,
+      description: "The 25th percentile.",
+    },
+    p50th: {
+      type: coda.ValueType.Number,
+      description: "The 50th percentile.",
+    },
+    p75th: {
+      type: coda.ValueType.Number,
+      description: "The 75th percentile.",
+    },
+    p90th: {
+      type: coda.ValueType.Number,
+      description: "The 90th percentile.",
+    },
+  },
+  idProperty: "sourceData",
+  displayProperty: "sourceData",
+});
+
 const ExpenseSchema = coda.makeObjectSchema({
   properties: {
     accountSlug: {
       type: coda.ValueType.String,
       description: "The slug of the account the expense belongs to.",
+    },
+    accountName: {
+      type: coda.ValueType.String,
+      description: "The name of the account the expense belongs to.",
+    },
+    accountPercentileRange: {
+      type: coda.ValueType.String,
+      description: "The percentile range that the expense amount falls into when compared to the last 100 expenses to the collective.",
+    },
+    accountParentSlug: {
+      type: coda.ValueType.String,
+      description: "The slug of the parent account the expense belongs to.",
+    },
+    accountParentName: {
+      type: coda.ValueType.String,
+      description: "The name of the parent account the expense belongs to.",
+    },
+    accountHostSlug: {
+      type: coda.ValueType.String,
+      description: "The slug of the host account the expense belongs to.",
     },
     amountValueInCents: {
       type: coda.ValueType.Number,
@@ -307,6 +359,10 @@ const ExpenseSchema = coda.makeObjectSchema({
       type: coda.ValueType.String,
       description: "The slug of the payee of the expense.",
     },
+    payeePercentileRange: {
+      type: coda.ValueType.String,
+      description: "The percentile range that the expense amount falls into when compared to the last 100 payouts to the payee.",
+    },
     payoutMethodName: {
       type: coda.ValueType.String,
       description: "The payout method name of the expense.",
@@ -346,6 +402,10 @@ const ExpenseSchema = coda.makeObjectSchema({
       type: coda.ValueType.Number,
       description: "The number of days between the expense being created and paid.",
     },
+    daysBetweenApprovedAndPaid: {
+      type: coda.ValueType.Number,
+      description: "The number of days between the expense being approved and paid.",
+    },
     approvedBeforeRejection: {
       type: coda.ValueType.Boolean,
       description: "Whether the expense was approved before being rejected.",
@@ -361,6 +421,22 @@ const ExpenseSchema = coda.makeObjectSchema({
       type: coda.ValueType.Boolean,
       description: "Whether the expense is missing a receipt.",
     },
+    last100ExpensesValuesInCentsToCollective: {
+      type: coda.ValueType.Array,
+      description: "The last 100 expense values in cents to the collective.",
+      items: coda.makeSchema({
+        type: coda.ValueType.Number,
+      })
+    },
+    last100ExpensesValuesInCentsToPayee: {
+      type: coda.ValueType.Array,
+      description: "The last 100 expense values in cents to the payee.",
+      items: coda.makeSchema({
+        type: coda.ValueType.Number,
+      })
+    },
+    collectiveExpensePercentileRanges: PercentilesSchema,
+    payeeExpensePercentileRanges: PercentilesSchema,
   },
   idProperty: "id",
   displayProperty: "description",
@@ -474,34 +550,66 @@ pack.addSyncTable({
       coda.makeParameter({
         type: coda.ParameterType.Number,
         name: "limit",
+        optional: true,
         description:
           "The number of expenses you want to retrieve per request.",
       }),
       coda.makeParameter({
         type: coda.ParameterType.Number,
-        name: "months",
+        name: "days",
+        optional: true,
         description:
-          "The number of months you want to retrieve expenses from.",
+          "The number of days you want to retrieve expenses from.",
+      }),
+      coda.makeParameter({
+        type: coda.ParameterType.String,
+        name: "status",
+        optional: true,
+        description:
+          "The status of expenses you want to retrieve.",
       }),
     ],
     execute: async function (args, context) {      
-      let [slug, limit, months] = args;
+      let [slug, limit, days, status] = args;
 
       const query = `
       query searchExpenses(
         $host: AccountReferenceInput, 
+        $status: ExpenseStatusFilter,
         $dateFrom: DateTime,
         $limit: Int, 
         $offset: Int
         ) 
         {
-        expenses(host: $host, dateFrom: $dateFrom, limit: $limit, offset: $offset) {
+        expenses(host: $host, dateFrom: $dateFrom, limit: $limit, offset: $offset, status: $status) {
           limit
           offset
           totalCount
           nodes {
             account {
               slug
+              name
+              transactions(limit: 100, type: DEBIT, kind: EXPENSE) {
+                limit
+                offset
+                totalCount
+                nodes {
+                  type
+                  amountInHostCurrency {
+                    valueInCents
+                  }
+                }
+              }
+              ... on AccountWithParent {
+                parent {
+                  slug
+                  name
+                }
+              }
+              ... on AccountWithHost {
+                host {
+                  slug                }
+              } 
             }
             activities {
               createdAt
@@ -513,28 +621,28 @@ pack.addSyncTable({
               isSystem
               type
             }
-            amountV2 {
-              value
-              currency
+            amountV2(currencySource: ACCOUNT) {
               valueInCents
-              exchangeRate {
-                fromCurrency
-              }
             }
             createdAt
             createdByAccount {
               slug
               emails
+              transactions(limit: 100, type: CREDIT, kind: EXPENSE) {
+                limit
+                offset
+                totalCount
+                nodes {
+                  type
+                  amountInHostCurrency {
+                    valueInCents
+                  }
+                }
+              }
             }
             currency
             description
-            comments {
-              totalCount
-            }
             id
-            items {
-              url
-            }
             legacyId
             payee {
               slug
@@ -545,12 +653,6 @@ pack.addSyncTable({
               id
               type
               name
-            }
-            securityChecks {
-              scope
-              level
-              message
-              details
             }
             status
             tags
@@ -570,18 +672,34 @@ pack.addSyncTable({
       }      
       `
 
-      let host = { slug: slug };
-      let today = new Date();
-      let monthAgo = new Date(today.setMonth(today.getMonth() - months));
-      let dateFrom = monthAgo.toISOString().split(".")[0] + "Z";
-
-
       let offset = 0;
       if (context.sync.continuation) {
         offset = context.sync.continuation.offset as number;
       }
 
-      const variables = { host, dateFrom, limit, offset};
+      // Only include dateFrom and status in the variables if they're not undefined or blank.
+      type VariablesType = {
+        host: { slug: string },
+        limit: number,
+        offset: number,
+        dateFrom?: string,
+        status?: string,
+      };
+
+
+      let host = { slug: slug };
+
+      let variables: VariablesType = { host, limit, offset };
+
+      let dateFrom;
+      if (days) {
+        let today = new Date();
+        let daysAgo = new Date(today.getTime() - days * 24 * 60 * 60 * 1000);
+        dateFrom = daysAgo.toISOString().split(".")[0] + "Z";
+      }
+      
+      if(dateFrom) variables.dateFrom = dateFrom;
+      if(status) variables.status = status;
 
       let response = await context.fetcher.fetch({
         method: "POST",
@@ -604,6 +722,93 @@ pack.addSyncTable({
         };
       }
 
+      type Percentiles = {
+        'sourceData': string;
+        'p10th': number;
+        'p25th': number;
+        'p50th': number;
+        'p75th': number;
+        'p90th': number;
+      };
+
+      function calculatePercentiles(data: number[], source: string): Percentiles {
+
+        // If the array is smaller than 10 elements, return 0 for all percentiles.
+        if (!data || data.length < 10) {
+          return {
+            sourceData: source,
+            'p10th': 0,
+            'p25th': 0,
+            'p50th': 0,
+            'p75th': 0,
+            'p90th': 0
+          };
+        }
+
+        // Sort the array in ascending order.
+        data.sort((a, b) => a - b);
+
+        // Function to calculate percentile.
+        function percentile(p: number): number {
+          if (data.length === 0) {
+            return 0;
+          }
+          const index = p * (data.length - 1);
+          const lower = Math.floor(index);
+          const upper = Math.ceil(index);
+          const weight = index % 1;
+          if (upper >= data.length) {
+            return data[lower];
+          }
+          return data[lower] * (1 - weight) + data[upper] * weight;
+        }
+      
+        // Return the calculated percentiles.
+        return {
+          'sourceData': source,
+          'p10th': percentile(0.10),
+          'p25th': percentile(0.25),
+          'p50th': percentile(0.50),
+          'p75th': percentile(0.75),
+          'p90th': percentile(0.90)
+        };
+      }
+
+      function findPercentileRange(num: number, percentiles: Percentiles): string {
+        if(!percentiles) return 'No data';
+        // If all percentiles are 0, return 'No data'.
+        if (percentiles['p10th'] === 0 && percentiles['p25th'] === 0 && percentiles['p50th'] === 0 && percentiles['p75th'] === 0 && percentiles['p90th'] === 0) {
+          return 'No data';
+        }
+        if (num < percentiles['p10th']) {
+          return 'Bottom 10%';
+        } else if (num < percentiles['p25th']) {
+          return '10% - 25%';
+        } else if (num < percentiles['p50th']) {
+          return '25% - 50%';
+        } else if (num < percentiles['75th']) {
+          return '50% - 75%';
+        } else if (num < percentiles['p90th']) {
+          return '75% - 90%';
+        } else {
+          return 'Top 10%';
+        }
+      }
+
+      function getAllTransactionAmounts(account) {
+        if (!account.transactions) return null;
+        const transactions = account.transactions.nodes;
+        if (!transactions) return null;
+        const amounts = transactions.map((transaction) => Math.abs(transaction.amountInHostCurrency.valueInCents));
+        return amounts;
+      }      
+
+      function calculateAccountTransactionPercentiles(account, source) {
+        const amounts = getAllTransactionAmounts(account);
+        const percentiles = calculatePercentiles(amounts, source);
+        return percentiles;
+      }
+
       function calculateDaysBetweenCreatedAndPaid(activities) {
         if (!activities) return null;
         const created = activities.find((activity) => activity.type === "COLLECTIVE_EXPENSE_CREATED");
@@ -612,7 +817,29 @@ pack.addSyncTable({
           const createdTime = new Date(created.createdAt).getTime();
           const paidTime = new Date(paid.createdAt).getTime();
           const timeDiff = paidTime - createdTime;
-          const daysDiff = timeDiff / (1000 * 3600 * 24); // 1000 ms/sec * 3600 sec/hour * 24 hours/day
+          const daysDiff = timeDiff / (1000 * 3600 * 24);
+          return daysDiff;
+        }
+        return null;
+      }
+
+      function calculateDaysBetweenApprovedAndPaid(activities) {
+        if (!activities) return null;
+      
+        // Sort activities by createdAt in ascending order
+        activities.sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
+      
+        // Find the first activity with type "COLLECTIVE_EXPENSE_APPROVED"
+        const approved = activities.find((activity) => activity.type === "COLLECTIVE_EXPENSE_APPROVED");
+      
+        // Find the activity with type "COLLECTIVE_EXPENSE_PAID"
+        const paid = activities.find((activity) => activity.type === "COLLECTIVE_EXPENSE_PAID");
+      
+        if (approved && paid) {
+          const approvedTime = new Date(approved.createdAt).getTime();
+          const paidTime = new Date(paid.createdAt).getTime();
+          const timeDiff = paidTime - approvedTime;
+          const daysDiff = timeDiff / (1000 * 3600 * 24);
           return daysDiff;
         }
         return null;
@@ -630,16 +857,6 @@ pack.addSyncTable({
         return false;
       }
 
-      function formatSecurityChecks(securityChecks) {
-        let formattedSecurityChecks = [];
-        if (!securityChecks) return formattedSecurityChecks;
-        securityChecks.forEach((securityCheck) => {
-          let formattedSecurityCheck = `${securityCheck.level}: ${securityCheck.message}. ${securityCheck.details}`;
-          formattedSecurityChecks.push(formattedSecurityCheck);
-        });
-        return formattedSecurityChecks;
-      }
-
       function checkIfMissingReceipt(expense) {
         return expense.status == "PAID" && expense.type === "CHARGE" && expense.items.every((item) => !item.url);
       }
@@ -647,20 +864,23 @@ pack.addSyncTable({
       res.nodes.forEach((expense) => {
           let row = {
             accountSlug: expense.account.slug,
+            accountName: expense.account.name,
+            accountParentSlug: expense.account.parent? expense.account.parent.slug : null,
+            accountParentName: expense.account.parent? expense.account.parent.name : null,
+            accountHostSlug: expense.account.host? expense.account.host.slug : null,
             amountValueInCents: expense.amountV2.valueInCents,
             amountCurrency: expense.amountV2.currency,
-            amountSourceCurrency: expense.amountV2.exchangeRate? expense.amountV2.exchangeRate.fromCurrency : null,
-            commentsCount: expense.comments? expense.comments.totalCount : 0,
+            accountPercentileRange: findPercentileRange(expense.amountV2.valueInCents, calculateAccountTransactionPercentiles(expense.account, expense.account.slug)),
             createdAt: expense.createdAt,
             createdByAccountSlug: expense.createdByAccount.slug,
             createdByAccountEmail: expense.createdByAccount.emails? expense.createdByAccount.emails[0] : null,
             description: expense.description,
             id: expense.id,
-            itemURLs: expense.items.map((item) => item.url),
             legacyId: expense.legacyId,
             payeeSlug: expense.payee.slug,
             payeeEmails: expense.payee.emails? expense.payee.emails[0] : null,
             payeeType: expense.payee.type,
+            payeePercentileRange: findPercentileRange(expense.amountV2.valueInCents, calculateAccountTransactionPercentiles(expense.payee, expense.payee.slug)),
             payoutMethodName: expense.payoutMethod? expense.payoutMethod.name : null,
             payoutMethodType: expense.payoutMethod? expense.payoutMethod.type : null,
             status: expense.status,
@@ -670,9 +890,13 @@ pack.addSyncTable({
             virtualCardAssigneeSlug: expense.virtualCard? expense.virtualCard.assignee.slug : null,
             virtualCardAccountSlug: expense.virtualCard? expense.virtualCard.account.slug : null,
             daysBetweenCreatedAndPaid: calculateDaysBetweenCreatedAndPaid(expense.activities),
+            daysBetweenApprovedAndPaid: calculateDaysBetweenApprovedAndPaid(expense.activities),
             approvedBeforeRejection: checkApprovalBeforeRejection(expense.activities),
-            securityChecks: formatSecurityChecks(expense.securityChecks),
             missingReceipt: checkIfMissingReceipt(expense),
+            last100ExpensesValuesInCentsToCollective: getAllTransactionAmounts(expense.account),
+            last100ExpensesValuesInCentsToPayee: getAllTransactionAmounts(expense.payee),
+            collectiveExpensePercentileRanges: calculateAccountTransactionPercentiles(expense.account, expense.account.slug),  
+            payeeExpensePercentileRanges: calculateAccountTransactionPercentiles(expense.payee, expense.payee.slug),
           }
           rows.push(row);
       })
