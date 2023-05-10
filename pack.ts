@@ -1,577 +1,565 @@
-import * as coda from "@codahq/packs-sdk";
-import percentile = require("percentile");
-import exp = require("constants");
+import * as coda from '@codahq/packs-sdk';
+import percentile from 'percentile';
+// import exp = require("constants");
 export const pack = coda.newPack();
 
 // This code is in alpha and is meant for internal use in Open Collective at the moment.
 
-pack.addNetworkDomain("api.opencollective.com");
+pack.addNetworkDomain('api.opencollective.com');
 
 pack.setUserAuthentication({
   type: coda.AuthenticationType.OAuth2,
-  authorizationUrl: "https://opencollective.com/oauth/authorize",
-  tokenUrl: "https://opencollective.com/oauth/token"
+  authorizationUrl: 'https://opencollective.com/oauth/authorize',
+  tokenUrl: 'https://opencollective.com/oauth/token',
 });
 
 const MemberSchema = coda.makeObjectSchema({
   properties: {
     slug: {
       type: coda.ValueType.String,
-      description: "The slug of the member.",
+      description: 'The slug of the member.',
     },
     role: {
       type: coda.ValueType.String,
-      description: "The role of the member.",
+      description: 'The role of the member.',
     },
-    name : {
+    name: {
       type: coda.ValueType.String,
-      description: "The name of the member.",
+      description: 'The name of the member.',
     },
     email: {
       type: coda.ValueType.String,
-      description: "The email of the member.",
+      description: 'The email of the member.',
     },
   },
-  displayProperty: "name",
-  idProperty: "slug",
+  displayProperty: 'name',
+  idProperty: 'slug',
 });
 
 const CollectiveSchema = coda.makeObjectSchema({
   properties: {
     collectiveId: {
       type: coda.ValueType.String,
-      description: "The ID of the collective.",
+      description: 'The ID of the collective.',
     },
     createdAt: {
       type: coda.ValueType.String,
-      description: "The date the collective was created.",
+      description: 'The date the collective was created.',
     },
     approvedAt: {
       type: coda.ValueType.String,
-      description: "The date the collective was approved.",
+      description: 'The date the collective was approved.',
     },
     admins: {
       type: coda.ValueType.Array,
       items: MemberSchema,
-      description: "The admins of the collective.",
+      description: 'The admins of the collective.',
     },
     name: {
       type: coda.ValueType.String,
-      description: "The name of the collective.",
+      description: 'The name of the collective.',
     },
     slug: {
       type: coda.ValueType.String,
-      description: "The slug of the collective.",
+      description: 'The slug of the collective.',
     },
     description: {
       type: coda.ValueType.String,
-      description: "The description of the collective.",
+      description: 'The description of the collective.',
     },
     type: {
       type: coda.ValueType.String,
-      description: "The type of the collective.",
+      description: 'The type of the collective.',
     },
     currency: {
       type: coda.ValueType.String,
-      description: "The currency of the collective.",
+      description: 'The currency of the collective.',
     },
     isFrozen: {
       type: coda.ValueType.Boolean,
-      description: "Whether the collective is frozen.",
+      description: 'Whether the collective is frozen.',
     },
     tags: {
       type: coda.ValueType.Array,
       items: {
         type: coda.ValueType.String,
       },
-      description: "The tags of the collective.",
+      description: 'The tags of the collective.',
     },
     balanceValueInCents: {
       type: coda.ValueType.Number,
-      description: "The balance of the collective in cents.",
+      description: 'The balance of the collective in cents.',
     },
     balanceCurrency: {
       type: coda.ValueType.String,
-      description: "The currency of the collective balance.",
+      description: 'The currency of the collective balance.',
     },
     totalAmountSpentValueInCents: {
       type: coda.ValueType.Number,
-      description: "The total amount spent of the collective in cents.",
+      description: 'The total amount spent of the collective in cents.',
     },
     totalAmountReceivedValueInCents: {
       type: coda.ValueType.Number,
-      description: "The total amount received of the collective in cents.",
+      description: 'The total amount received of the collective in cents.',
     },
     totalAmountSpentValueInCentsPast12Months: {
       type: coda.ValueType.Number,
-      description:
-        "The total amount spent of the collective in cents in the past 12 months.",
+      description: 'The total amount spent of the collective in cents in the past 12 months.',
     },
     totalAmountReceivedValueInCentsPast12Months: {
       type: coda.ValueType.Number,
-      description:
-        "The total amount received of the collective in cents in the past 12 months.",
+      description: 'The total amount received of the collective in cents in the past 12 months.',
     },
     totalAmountSpentValueInCentsPast9Months: {
       type: coda.ValueType.Number,
-      description:
-        "The total amount spent of the collective in cents in the past 9 months.",
+      description: 'The total amount spent of the collective in cents in the past 9 months.',
     },
     totalAmountReceivedValueInCentsPast9Months: {
       type: coda.ValueType.Number,
-      description:
-        "The total amount received of the collective in cents in the past 9 months.",
+      description: 'The total amount received of the collective in cents in the past 9 months.',
     },
     totalAmountSpentValueInCentsPast6Months: {
       type: coda.ValueType.Number,
-      description:
-        "The total amount spent of the collective in cents in the past 6 months.",
+      description: 'The total amount spent of the collective in cents in the past 6 months.',
     },
     totalAmountReceivedValueInCentsPast6Months: {
       type: coda.ValueType.Number,
-      description:
-        "The total amount received of the collective in cents in the past 6 months.",
+      description: 'The total amount received of the collective in cents in the past 6 months.',
     },
     totalAmountSpentValueInCentsPast3Months: {
       type: coda.ValueType.Number,
-      description:
-        "The total amount spent of the collective in cents in the past 3 months.",
+      description: 'The total amount spent of the collective in cents in the past 3 months.',
     },
     totalAmountReceivedValueInCentsPast3Months: {
       type: coda.ValueType.Number,
-      description:
-        "The total amount received of the collective in cents in the past 3 months.",
+      description: 'The total amount received of the collective in cents in the past 3 months.',
     },
     totalAmountSpentValueInCentsPast1Month: {
       type: coda.ValueType.Number,
-      description:
-        "The total amount spent of the collective in cents in the past 1 month.",
+      description: 'The total amount spent of the collective in cents in the past 1 month.',
     },
     totalAmountReceivedValueInCentsPast1Month: {
       type: coda.ValueType.Number,
-      description:
-        "The total amount received of the collective in cents in the past 1 month.",
+      description: 'The total amount received of the collective in cents in the past 1 month.',
     },
     hostFeesStructure: {
       type: coda.ValueType.String,
-      description: "The host fees structure of the collective.",
+      description: 'The host fees structure of the collective.',
     },
     hostFeePercent: {
       type: coda.ValueType.Number,
-      description: "The host fee percent of the collective.",
+      description: 'The host fee percent of the collective.',
     },
     totalFinancialContributors: {
       type: coda.ValueType.Number,
-      description: "The total financial contributors of the collective.",
-    }
+      description: 'The total financial contributors of the collective.',
+    },
   },
-  displayProperty: "name",
-  idProperty: "slug",
+  displayProperty: 'name',
+  idProperty: 'slug',
 });
 
 const OrderSchema = coda.makeObjectSchema({
   properties: {
     id: {
       type: coda.ValueType.Number,
-      description: "The ID of the order.",
+      description: 'The ID of the order.',
     },
     legacyId: {
       type: coda.ValueType.Number,
-      description: "The legacy ID of the order.",
+      description: 'The legacy ID of the order.',
     },
     amountValueInCents: {
       type: coda.ValueType.Number,
-      description: "The amount of the order in cents.",
+      description: 'The amount of the order in cents.',
     },
     amountCurrency: {
       type: coda.ValueType.String,
-      description: "The currency of the order amount.",
+      description: 'The currency of the order amount.',
     },
     totalAmountValueInCents: {
       type: coda.ValueType.Number,
-      description: "The total amount of the order in cents.",
+      description: 'The total amount of the order in cents.',
     },
     totalAmountCurrency: {
       type: coda.ValueType.String,
-      description: "The currency of the order total amount.",
+      description: 'The currency of the order total amount.',
     },
     createdAt: {
       type: coda.ValueType.String,
-      description: "The date the order was created.",
+      description: 'The date the order was created.',
     },
     updatedAt: {
       type: coda.ValueType.String,
-      description: "The date the order was updated.",
+      description: 'The date the order was updated.',
     },
     createdByAccountSlug: {
       type: coda.ValueType.String,
-      description: "The slug of the account that created the order.",
+      description: 'The slug of the account that created the order.',
     },
     createdByAccountEmail: {
       type: coda.ValueType.String,
-      description: "The email of the account that created the order.",
+      description: 'The email of the account that created the order.',
     },
     memo: {
       type: coda.ValueType.String,
-      description: "The memo of the order.",
+      description: 'The memo of the order.',
     },
     paymentMethodName: {
       type: coda.ValueType.String,
-      description: "The payment method name of the order.",
+      description: 'The payment method name of the order.',
     },
     pendingContributionExpectedAt: {
       type: coda.ValueType.String,
-      description: "The date the pending contribution is expected.",
+      description: 'The date the pending contribution is expected.',
     },
     status: {
       type: coda.ValueType.String,
-      description: "The status of the order.",
+      description: 'The status of the order.',
     },
     toAccountSlug: {
       type: coda.ValueType.String,
-      description: "The slug of the account the order is going to.",
+      description: 'The slug of the account the order is going to.',
     },
     toAccountParentSlug: {
       type: coda.ValueType.String,
-      description: "The slug of the parent account the order is going to.",
+      description: 'The slug of the parent account the order is going to.',
     },
     processedAt: {
       type: coda.ValueType.String,
-      description: "The date the order was processed.",
+      description: 'The date the order was processed.',
     },
     description: {
       type: coda.ValueType.String,
-      description: "The description of the order.",
+      description: 'The description of the order.',
     },
     data: {
       type: coda.ValueType.String,
-      description: "The data of the order.",
+      description: 'The data of the order.',
     },
   },
-  idProperty: "id",
-  displayProperty: "description",
+  idProperty: 'id',
+  displayProperty: 'description',
 });
 
 const PercentilesSchema = coda.makeObjectSchema({
   properties: {
     sourceData: {
       type: coda.ValueType.String,
-      description: "The source data of the percentiles.",
+      description: 'The source data of the percentiles.',
     },
     p10th: {
       type: coda.ValueType.Number,
-      description: "The 10th percentile.",
+      description: 'The 10th percentile.',
     },
     p25th: {
       type: coda.ValueType.Number,
-      description: "The 25th percentile.",
+      description: 'The 25th percentile.',
     },
     p50th: {
       type: coda.ValueType.Number,
-      description: "The 50th percentile.",
+      description: 'The 50th percentile.',
     },
     p75th: {
       type: coda.ValueType.Number,
-      description: "The 75th percentile.",
+      description: 'The 75th percentile.',
     },
     p90th: {
       type: coda.ValueType.Number,
-      description: "The 90th percentile.",
+      description: 'The 90th percentile.',
     },
   },
-  idProperty: "sourceData",
-  displayProperty: "sourceData",
+  idProperty: 'sourceData',
+  displayProperty: 'sourceData',
 });
 
 const ExpenseSchema = coda.makeObjectSchema({
   properties: {
     accountSlug: {
       type: coda.ValueType.String,
-      description: "The slug of the account the expense belongs to.",
+      description: 'The slug of the account the expense belongs to.',
     },
     accountName: {
       type: coda.ValueType.String,
-      description: "The name of the account the expense belongs to.",
+      description: 'The name of the account the expense belongs to.',
     },
     accountPercentileRange: {
       type: coda.ValueType.String,
-      description: "The percentile range that the expense amount falls into when compared to the last 100 expenses to the collective.",
+      description:
+        'The percentile range that the expense amount falls into when compared to the last 100 expenses to the collective.',
     },
     accountParentSlug: {
       type: coda.ValueType.String,
-      description: "The slug of the parent account the expense belongs to.",
+      description: 'The slug of the parent account the expense belongs to.',
     },
     accountParentName: {
       type: coda.ValueType.String,
-      description: "The name of the parent account the expense belongs to.",
+      description: 'The name of the parent account the expense belongs to.',
     },
     accountHostSlug: {
       type: coda.ValueType.String,
-      description: "The slug of the host account the expense belongs to.",
+      description: 'The slug of the host account the expense belongs to.',
     },
     amountValueInCents: {
       type: coda.ValueType.Number,
-      description: "The amount of the expense in cents.",
+      description: 'The amount of the expense in cents.',
     },
     amountCurrency: {
       type: coda.ValueType.String,
-      description: "The currency of the expense amount.",
+      description: 'The currency of the expense amount.',
     },
     amountSourceCurrency: {
       type: coda.ValueType.String,
-      description: "The source currency of the expense amount.",
+      description: 'The source currency of the expense amount.',
     },
     commentsCount: {
       type: coda.ValueType.Number,
-      description: "The number of comments on the expense.",
+      description: 'The number of comments on the expense.',
     },
     createdAt: {
       type: coda.ValueType.String,
-      description: "The date the expense was created.",
+      description: 'The date the expense was created.',
     },
     createdByAccountSlug: {
       type: coda.ValueType.String,
-      description: "The slug of the account that created the expense.",
+      description: 'The slug of the account that created the expense.',
     },
     createdByAccountEmail: {
       type: coda.ValueType.String,
-      description: "The email of the account that created the expense.",
+      description: 'The email of the account that created the expense.',
     },
     description: {
       type: coda.ValueType.String,
-      description: "The description of the expense.",
+      description: 'The description of the expense.',
     },
     id: {
       type: coda.ValueType.String,
-      description: "The ID of the expense.",
+      description: 'The ID of the expense.',
     },
     itemUrls: {
       type: coda.ValueType.Array,
-      description: "The item URLs of the expense.",
+      description: 'The item URLs of the expense.',
       items: coda.makeSchema({
         type: coda.ValueType.String,
-      })
+      }),
     },
     legacyId: {
       type: coda.ValueType.Number,
-      description: "The legacy ID of the expense.",
+      description: 'The legacy ID of the expense.',
     },
     payeeSlug: {
       type: coda.ValueType.String,
-      description: "The slug of the payee of the expense.",
+      description: 'The slug of the payee of the expense.',
     },
     payeePercentileRange: {
       type: coda.ValueType.String,
-      description: "The percentile range that the expense amount falls into when compared to the last 100 payouts to the payee.",
+      description:
+        'The percentile range that the expense amount falls into when compared to the last 100 payouts to the payee.',
     },
     payoutMethodName: {
       type: coda.ValueType.String,
-      description: "The payout method name of the expense.",
+      description: 'The payout method name of the expense.',
     },
     payoutMethodType: {
       type: coda.ValueType.String,
-      description: "The payout method type of the expense.",
+      description: 'The payout method type of the expense.',
     },
     status: {
       type: coda.ValueType.String,
-      description: "The status of the expense.",
+      description: 'The status of the expense.',
     },
     tags: {
       type: coda.ValueType.Array,
-      description: "The tags of the expense.",
+      description: 'The tags of the expense.',
       items: coda.makeSchema({
         type: coda.ValueType.String,
-      })
+      }),
     },
     type: {
       type: coda.ValueType.String,
-      description: "The type of the expense.",
+      description: 'The type of the expense.',
     },
     virtualCardId: {
       type: coda.ValueType.String,
-      description: "The virtual card ID of the expense.",
+      description: 'The virtual card ID of the expense.',
     },
     virtualCardAssigneeSlug: {
       type: coda.ValueType.String,
-      description: "The slug of the assignee of the virtual card.",
+      description: 'The slug of the assignee of the virtual card.',
     },
     virtualCardAccountSlug: {
       type: coda.ValueType.String,
-      description: "The slug of the account the virtual card belongs to.",
+      description: 'The slug of the account the virtual card belongs to.',
     },
     daysBetweenCreatedAndPaid: {
       type: coda.ValueType.Number,
-      description: "The number of days between the expense being created and paid.",
+      description: 'The number of days between the expense being created and paid.',
     },
     daysBetweenApprovedAndPaid: {
       type: coda.ValueType.Number,
-      description: "The number of days between the expense being approved and paid.",
+      description: 'The number of days between the expense being approved and paid.',
     },
     approvedBeforeRejection: {
       type: coda.ValueType.Boolean,
-      description: "Whether the expense was approved before being rejected.",
+      description: 'Whether the expense was approved before being rejected.',
     },
     securityChecks: {
       type: coda.ValueType.Array,
-      description: "The security checks of the expense.",
+      description: 'The security checks of the expense.',
       items: coda.makeSchema({
         type: coda.ValueType.String,
-      })
+      }),
     },
     missingReceipt: {
       type: coda.ValueType.Boolean,
-      description: "Whether the expense is missing a receipt.",
+      description: 'Whether the expense is missing a receipt.',
     },
     last100ExpensesValuesInCentsToCollective: {
       type: coda.ValueType.Array,
-      description: "The last 100 expense values in cents to the collective.",
+      description: 'The last 100 expense values in cents to the collective.',
       items: coda.makeSchema({
         type: coda.ValueType.Number,
-      })
+      }),
     },
     last100ExpensesValuesInCentsToPayee: {
       type: coda.ValueType.Array,
-      description: "The last 100 expense values in cents to the payee.",
+      description: 'The last 100 expense values in cents to the payee.',
       items: coda.makeSchema({
         type: coda.ValueType.Number,
-      })
+      }),
     },
     collectiveExpensePercentileRanges: PercentilesSchema,
     payeeExpensePercentileRanges: PercentilesSchema,
   },
-  idProperty: "id",
-  displayProperty: "description",
+  idProperty: 'id',
+  displayProperty: 'description',
 });
 
 const SocialLinkSchema = coda.makeObjectSchema({
-  description: "A social link.",
+  description: 'A social link.',
   properties: {
     type: {
       type: coda.ValueType.String,
-      description: "The type of social link.",
+      description: 'The type of social link.',
     },
     url: {
       type: coda.ValueType.String,
-      description: "The URL of the social link.",
+      description: 'The URL of the social link.',
     },
   },
-  displayProperty: "type",
-  idProperty: "url",
+  displayProperty: 'type',
+  idProperty: 'url',
 });
 
 const UpdateSchema = coda.makeObjectSchema({
   properties: {
     id: {
       type: coda.ValueType.String,
-      description: "The ID of the update.",
+      description: 'The ID of the update.',
     },
     title: {
       type: coda.ValueType.String,
-      description: "The title of the update.",
+      description: 'The title of the update.',
     },
     createdAt: {
       type: coda.ValueType.String,
-      description: "The date the update was created.",
+      description: 'The date the update was created.',
     },
     slug: {
       type: coda.ValueType.String,
-      description: "The slug of the update.",
+      description: 'The slug of the update.',
     },
     summary: {
       type: coda.ValueType.String,
-      description: "The summary of the update.",
+      description: 'The summary of the update.',
     },
     html: {
       type: coda.ValueType.String,
-      description: "The HTML of the update.",
+      description: 'The HTML of the update.',
     },
     accountSlug: {
       type: coda.ValueType.String,
-      description: "The slug of the account that created the update.",
+      description: 'The slug of the account that created the update.',
     },
     accountImageUrl: {
       type: coda.ValueType.String,
-      description: "The image URL of the account that created the update.",
+      description: 'The image URL of the account that created the update.',
     },
     accountName: {
       type: coda.ValueType.String,
-      description: "The name of the account that created the update.",
+      description: 'The name of the account that created the update.',
     },
     fromAccountId: {
       type: coda.ValueType.String,
-      description: "The ID of the account that created the update.",
+      description: 'The ID of the account that created the update.',
     },
     fromAccountName: {
       type: coda.ValueType.String,
-      description: "The name of the account that created the update.",
+      description: 'The name of the account that created the update.',
     },
     fromAccountImageUrl: {
       type: coda.ValueType.String,
-      description: "The image URL of the account that created the update.",
+      description: 'The image URL of the account that created the update.',
     },
     images: {
       type: coda.ValueType.Array,
-      description: "The images of the update.",
+      description: 'The images of the update.',
       items: coda.makeSchema({
         type: coda.ValueType.String,
         codaType: coda.ValueHintType.ImageAttachment,
-      })
+      }),
     },
     accountSocialLinks: {
       type: coda.ValueType.Array,
-      description: "The social links of the collective.",
+      description: 'The social links of the collective.',
       items: SocialLinkSchema,
     },
     fromAccountSocialLinks: {
       type: coda.ValueType.Array,
-      description: "The social links of the author.",
+      description: 'The social links of the author.',
       items: SocialLinkSchema,
     },
   },
-  idProperty: "id",
-  displayProperty: "title",
+  idProperty: 'id',
+  displayProperty: 'title',
 });
 
 // Expenses to host
 pack.addSyncTable({
-  name: "ExpensesToHost",
-  description: "Lists all expenses to host.",
-  identityName: "ExpenseToHost",
+  name: 'ExpensesToHost',
+  description: 'Lists all expenses to host.',
+  identityName: 'ExpenseToHost',
   schema: ExpenseSchema,
   formula: {
-    name: "SyncExpensesToHost",
-    description: "Syncs expenses to host.",
+    name: 'SyncExpensesToHost',
+    description: 'Syncs expenses to host.',
     parameters: [
       coda.makeParameter({
         type: coda.ParameterType.String,
-        name: "slug",
-        description:
-          "The slug of the host you want to retrieve expenses to host from.",
+        name: 'slug',
+        description: 'The slug of the host you want to retrieve expenses to host from.',
       }),
       coda.makeParameter({
         type: coda.ParameterType.Number,
-        name: "limit",
+        name: 'limit',
         optional: true,
-        description:
-          "The number of expenses you want to retrieve per request.",
+        description: 'The number of expenses you want to retrieve per request.',
       }),
       coda.makeParameter({
         type: coda.ParameterType.Number,
-        name: "days",
+        name: 'days',
         optional: true,
-        description:
-          "The number of days you want to retrieve expenses from.",
+        description: 'The number of days you want to retrieve expenses from.',
       }),
       coda.makeParameter({
         type: coda.ParameterType.String,
-        name: "status",
+        name: 'status',
         optional: true,
-        description:
-          "The status of expenses you want to retrieve.",
+        description: 'The status of expenses you want to retrieve.',
       }),
     ],
-    execute: async function (args, context) {      
-      let [slug, limit, days, status] = args;
+    execute: async function (args, context) {
+      const [slug, limit, days, status] = args;
 
       const query = `
       query searchExpenses(
@@ -671,7 +659,7 @@ pack.addSyncTable({
           }
         }
       }      
-      `
+      `;
 
       let offset = 0;
       if (context.sync.continuation) {
@@ -680,92 +668,102 @@ pack.addSyncTable({
 
       // Only include dateFrom and status in the variables if they're not undefined or blank.
       type VariablesType = {
-        host: { slug: string },
-        limit: number,
-        offset: number,
-        dateFrom?: string,
-        status?: string,
+        host: { slug: string };
+        limit: number;
+        offset: number;
+        dateFrom?: string;
+        status?: string;
       };
 
+      const host = { slug: slug };
 
-      let host = { slug: slug };
-
-      let variables: VariablesType = { host, limit, offset };
+      const variables: VariablesType = { host, limit, offset };
 
       let dateFrom;
       if (days) {
-        let today = new Date();
-        let daysAgo = new Date(today.getTime() - days * 24 * 60 * 60 * 1000);
-        dateFrom = daysAgo.toISOString().split(".")[0] + "Z";
+        const today = new Date();
+        const daysAgo = new Date(today.getTime() - days * 24 * 60 * 60 * 1000);
+        dateFrom = `${daysAgo.toISOString().split('.')[0]}Z`;
       }
-      
-      if(dateFrom) variables.dateFrom = dateFrom;
-      if(status) variables.status = status;
 
-      let response = await context.fetcher.fetch({
-        method: "POST",
-        url: "https://api.opencollective.com/graphql/v2",
+      if (dateFrom) {
+        variables.dateFrom = dateFrom;
+      }
+      if (status) {
+        variables.status = status;
+      }
+
+      const response = await context.fetcher.fetch({
+        method: 'POST',
+        url: 'https://api.opencollective.com/graphql/v2',
         headers: {
-          "Content-Type": "application/json",
+          'Content-Type': 'application/json',
         },
         body: JSON.stringify({ query, variables }),
       });
 
-      let res = await response.body.data.expenses;
-      let rows = []
-      let total = res.totalCount as number
-      let new_offset = res.offset as number;
+      const res = await response.body.data.expenses;
+      const rows = [];
+      const total = res.totalCount as number;
+      const new_offset = res.offset as number;
 
       let continuation;
-      if ((limit + new_offset) < total) {
+      if (limit + new_offset < total) {
         continuation = {
           offset: new_offset + limit,
         };
       }
 
-      const percentile = require("percentile");
+      // const percentile = require("percentile");
 
       type Percentiles = {
-        'sourceData': string;
-        'p10th': number;
-        'p25th': number;
-        'p50th': number;
-        'p75th': number;
-        'p90th': number;
+        sourceData: string;
+        p10th: number;
+        p25th: number;
+        p50th: number;
+        p75th: number;
+        p90th: number;
       };
-      
+
       function calculatePercentiles(data: number[], source: string): Percentiles {
-      
         // If the array is smaller than 10 elements, return 0 for all percentiles.
         if (!data || data.length < 10) {
           return {
             sourceData: source,
-            'p10th': 0,
-            'p25th': 0,
-            'p50th': 0,
-            'p75th': 0,
-            'p90th': 0
+            p10th: 0,
+            p25th: 0,
+            p50th: 0,
+            p75th: 0,
+            p90th: 0,
           };
         }
-      
+
         // Calculate the percentiles using the percentile library.
         const percentiles = percentile([10, 25, 50, 75, 90], data);
-      
+
         // Return the calculated percentiles.
         return {
-          'sourceData': source,
-          'p10th': percentiles[0],
-          'p25th': percentiles[1],
-          'p50th': percentiles[2],
-          'p75th': percentiles[3],
-          'p90th': percentiles[4]
+          sourceData: source,
+          p10th: percentiles[0],
+          p25th: percentiles[1],
+          p50th: percentiles[2],
+          p75th: percentiles[3],
+          p90th: percentiles[4],
         };
       }
-      
+
       function findPercentileRange(num: number, percentiles: Percentiles): string {
-        if(!percentiles) return 'No data';
+        if (!percentiles) {
+          return 'No data';
+        }
         // If all percentiles are 0, return 'No data'.
-        if (percentiles['p10th'] === 0 && percentiles['p25th'] === 0 && percentiles['p50th'] === 0 && percentiles['p75th'] === 0 && percentiles['p90th'] === 0) {
+        if (
+          percentiles['p10th'] === 0 &&
+          percentiles['p25th'] === 0 &&
+          percentiles['p50th'] === 0 &&
+          percentiles['p75th'] === 0 &&
+          percentiles['p90th'] === 0
+        ) {
           return 'No data';
         }
         if (num < percentiles['p25th']) {
@@ -778,17 +776,20 @@ pack.addSyncTable({
           return '90%';
         } else {
           return '90%+';
-        }        
+        }
       }
-      
 
       function getAllTransactionAmounts(account) {
-        if (!account.transactions) return null;
+        if (!account.transactions) {
+          return null;
+        }
         const transactions = account.transactions.nodes;
-        if (!transactions) return null;
-        const amounts = transactions.map((transaction) => Math.abs(transaction.amountInHostCurrency.valueInCents));
+        if (!transactions) {
+          return null;
+        }
+        const amounts = transactions.map(transaction => Math.abs(transaction.amountInHostCurrency.valueInCents));
         return amounts;
-      }      
+      }
 
       function calculateAccountTransactionPercentiles(account, source) {
         const amounts = getAllTransactionAmounts(account);
@@ -797,9 +798,11 @@ pack.addSyncTable({
       }
 
       function calculateDaysBetweenCreatedAndPaid(activities) {
-        if (!activities) return null;
-        const created = activities.find((activity) => activity.type === "COLLECTIVE_EXPENSE_CREATED");
-        const paid = activities.find((activity) => activity.type === "COLLECTIVE_EXPENSE_PAID");
+        if (!activities) {
+          return null;
+        }
+        const created = activities.find(activity => activity.type === 'COLLECTIVE_EXPENSE_CREATED');
+        const paid = activities.find(activity => activity.type === 'COLLECTIVE_EXPENSE_PAID');
         if (created && paid) {
           const createdTime = new Date(created.createdAt).getTime();
           const paidTime = new Date(paid.createdAt).getTime();
@@ -811,17 +814,19 @@ pack.addSyncTable({
       }
 
       function calculateDaysBetweenApprovedAndPaid(activities) {
-        if (!activities) return null;
-      
+        if (!activities) {
+          return null;
+        }
+
         // Sort activities by createdAt in ascending order
         activities.sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
-      
+
         // Find the first activity with type "COLLECTIVE_EXPENSE_APPROVED"
-        const approved = activities.find((activity) => activity.type === "COLLECTIVE_EXPENSE_APPROVED");
-      
+        const approved = activities.find(activity => activity.type === 'COLLECTIVE_EXPENSE_APPROVED');
+
         // Find the activity with type "COLLECTIVE_EXPENSE_PAID"
-        const paid = activities.find((activity) => activity.type === "COLLECTIVE_EXPENSE_PAID");
-      
+        const paid = activities.find(activity => activity.type === 'COLLECTIVE_EXPENSE_PAID');
+
         if (approved && paid) {
           const approvedTime = new Date(approved.createdAt).getTime();
           const paidTime = new Date(paid.createdAt).getTime();
@@ -833,9 +838,19 @@ pack.addSyncTable({
       }
 
       function checkApprovalBeforeRejection(activities) {
-        if (!activities) return false;
-        const approved = activities.find((activity) => activity.type === "COLLECTIVE_EXPENSE_APPROVED");
-        const rejected = activities.find((activity) => ["COLLECTIVE_EXPENSE_REJECTED", "COLLECTIVE_EXPENSE_UNAPPROVED", "COLLECTIVE_EXPENSE_MARKED_AS_SPAM", "COLLECTIVE_EXPENSE_MARKED_AS_INCOMPLETE", "COLLECTIVE_EXPENSE_MISSING_RECEIPT"].includes(activity.type));
+        if (!activities) {
+          return false;
+        }
+        const approved = activities.find(activity => activity.type === 'COLLECTIVE_EXPENSE_APPROVED');
+        const rejected = activities.find(activity =>
+          [
+            'COLLECTIVE_EXPENSE_REJECTED',
+            'COLLECTIVE_EXPENSE_UNAPPROVED',
+            'COLLECTIVE_EXPENSE_MARKED_AS_SPAM',
+            'COLLECTIVE_EXPENSE_MARKED_AS_INCOMPLETE',
+            'COLLECTIVE_EXPENSE_MISSING_RECEIPT',
+          ].includes(activity.type),
+        );
         if (approved && rejected) {
           const approvedTime = new Date(approved.createdAt).getTime();
           const rejectedTime = new Date(rejected.createdAt).getTime();
@@ -845,49 +860,58 @@ pack.addSyncTable({
       }
 
       function checkIfMissingReceipt(expense) {
-        return expense.status == "PAID" && expense.type === "CHARGE" && expense.items.every((item) => !item.url);
+        return expense.status === 'PAID' && expense.type === 'CHARGE' && expense.items.every(item => !item.url);
       }
 
-      res.nodes.forEach((expense) => {
-          let row = {
-            accountSlug: expense.account.slug,
-            accountName: expense.account.name,
-            accountParentSlug: expense.account.parent? expense.account.parent.slug : null,
-            accountParentName: expense.account.parent? expense.account.parent.name : null,
-            accountHostSlug: expense.account.host? expense.account.host.slug : null,
-            amountValueInCents: expense.amountV2.valueInCents,
-            amountCurrency: expense.amountV2.currency,
-            accountPercentileRange: findPercentileRange(expense.amountV2.valueInCents, calculateAccountTransactionPercentiles(expense.account, expense.account.slug)),
-            createdAt: expense.createdAt,
-            createdByAccountSlug: expense.createdByAccount.slug,
-            createdByAccountEmail: expense.createdByAccount.emails? expense.createdByAccount.emails[0] : null,
-            description: expense.description,
-            id: expense.id,
-            legacyId: expense.legacyId,
-            payeeSlug: expense.payee.slug,
-            payeeEmails: expense.payee.emails? expense.payee.emails[0] : null,
-            payeeType: expense.payee.type,
-            payeePercentileRange: findPercentileRange(expense.amountV2.valueInCents, calculateAccountTransactionPercentiles(expense.payee, expense.payee.slug)),
-            payoutMethodName: expense.payoutMethod? expense.payoutMethod.name : null,
-            payoutMethodType: expense.payoutMethod? expense.payoutMethod.type : null,
-            status: expense.status,
-            tags: expense.tags,
-            virtualCardId: expense.virtualCard? expense.virtualCard.id : null,
-            virtualCardName: expense.virtualCard? expense.virtualCard.name : null,
-            virtualCardAssigneeSlug: expense.virtualCard? expense.virtualCard.assignee.slug : null,
-            virtualCardAccountSlug: expense.virtualCard? expense.virtualCard.account.slug : null,
-            daysBetweenCreatedAndPaid: calculateDaysBetweenCreatedAndPaid(expense.activities),
-            daysBetweenApprovedAndPaid: calculateDaysBetweenApprovedAndPaid(expense.activities),
-            approvedBeforeRejection: checkApprovalBeforeRejection(expense.activities),
-            missingReceipt: checkIfMissingReceipt(expense),
-            last100ExpensesValuesInCentsToCollective: getAllTransactionAmounts(expense.account),
-            last100ExpensesValuesInCentsToPayee: getAllTransactionAmounts(expense.payee),
-            collectiveExpensePercentileRanges: calculateAccountTransactionPercentiles(expense.account, expense.account.slug),  
-            payeeExpensePercentileRanges: calculateAccountTransactionPercentiles(expense.payee, expense.payee.slug),
-          }
-          rows.push(row);
-      })
-      
+      res.nodes.forEach(expense => {
+        const row = {
+          accountSlug: expense.account.slug,
+          accountName: expense.account.name,
+          accountParentSlug: expense.account.parent ? expense.account.parent.slug : null,
+          accountParentName: expense.account.parent ? expense.account.parent.name : null,
+          accountHostSlug: expense.account.host ? expense.account.host.slug : null,
+          amountValueInCents: expense.amountV2.valueInCents,
+          amountCurrency: expense.amountV2.currency,
+          accountPercentileRange: findPercentileRange(
+            expense.amountV2.valueInCents,
+            calculateAccountTransactionPercentiles(expense.account, expense.account.slug),
+          ),
+          createdAt: expense.createdAt,
+          createdByAccountSlug: expense.createdByAccount.slug,
+          createdByAccountEmail: expense.createdByAccount.emails ? expense.createdByAccount.emails[0] : null,
+          description: expense.description,
+          id: expense.id,
+          legacyId: expense.legacyId,
+          payeeSlug: expense.payee.slug,
+          payeeEmails: expense.payee.emails ? expense.payee.emails[0] : null,
+          payeeType: expense.payee.type,
+          payeePercentileRange: findPercentileRange(
+            expense.amountV2.valueInCents,
+            calculateAccountTransactionPercentiles(expense.payee, expense.payee.slug),
+          ),
+          payoutMethodName: expense.payoutMethod ? expense.payoutMethod.name : null,
+          payoutMethodType: expense.payoutMethod ? expense.payoutMethod.type : null,
+          status: expense.status,
+          tags: expense.tags,
+          virtualCardId: expense.virtualCard ? expense.virtualCard.id : null,
+          virtualCardName: expense.virtualCard ? expense.virtualCard.name : null,
+          virtualCardAssigneeSlug: expense.virtualCard ? expense.virtualCard.assignee.slug : null,
+          virtualCardAccountSlug: expense.virtualCard ? expense.virtualCard.account.slug : null,
+          daysBetweenCreatedAndPaid: calculateDaysBetweenCreatedAndPaid(expense.activities),
+          daysBetweenApprovedAndPaid: calculateDaysBetweenApprovedAndPaid(expense.activities),
+          approvedBeforeRejection: checkApprovalBeforeRejection(expense.activities),
+          missingReceipt: checkIfMissingReceipt(expense),
+          last100ExpensesValuesInCentsToCollective: getAllTransactionAmounts(expense.account),
+          last100ExpensesValuesInCentsToPayee: getAllTransactionAmounts(expense.payee),
+          collectiveExpensePercentileRanges: calculateAccountTransactionPercentiles(
+            expense.account,
+            expense.account.slug,
+          ),
+          payeeExpensePercentileRanges: calculateAccountTransactionPercentiles(expense.payee, expense.payee.slug),
+        };
+        rows.push(row);
+      });
+
       return {
         result: rows,
         continuation: continuation,
@@ -898,36 +922,32 @@ pack.addSyncTable({
 
 // Orders to host
 pack.addSyncTable({
-  name: "OrdersToHost",
-  description: "Lists all orders to host.",
-  identityName: "OrderToHost",
+  name: 'OrdersToHost',
+  description: 'Lists all orders to host.',
+  identityName: 'OrderToHost',
   schema: OrderSchema,
   formula: {
-    name: "SyncOrdersToHost",
-    description: "Syncs orders to host.",
+    name: 'SyncOrdersToHost',
+    description: 'Syncs orders to host.',
     parameters: [
       coda.makeParameter({
         type: coda.ParameterType.String,
-        name: "slug",
-        description:
-          "The slug of the host you want to retrieve orders to host from.",
+        name: 'slug',
+        description: 'The slug of the host you want to retrieve orders to host from.',
       }),
       coda.makeParameter({
         type: coda.ParameterType.Number,
-        name: "limit",
-        description:
-          "The number of orders you want to retrieve per request.",
+        name: 'limit',
+        description: 'The number of orders you want to retrieve per request.',
       }),
       coda.makeParameter({
         type: coda.ParameterType.Number,
-        name: "months",
-        description:
-          "The number of months you want to retrieve orders from.",
+        name: 'months',
+        description: 'The number of months you want to retrieve orders from.',
       }),
     ],
     execute: async function (args, context) {
-      
-      let [slug, limit, months] = args;
+      const [slug, limit, months] = args;
 
       const query = `
       query SearchOrders(
@@ -997,43 +1017,42 @@ pack.addSyncTable({
       }
       `;
 
-      let host = { slug: slug };
-      let today = new Date();
-      let monthAgo = new Date(today.setMonth(today.getMonth() - months));
-      let dateFrom = monthAgo.toISOString().split(".")[0] + "Z";
-
+      const host = { slug: slug };
+      const today = new Date();
+      const monthAgo = new Date(today.setMonth(today.getMonth() - months));
+      const dateFrom = `${monthAgo.toISOString().split('.')[0]}Z`;
 
       let offset = 0;
       if (context.sync.continuation) {
         offset = context.sync.continuation.offset as number;
       }
 
-      const variables = { host, dateFrom, limit, offset};
+      const variables = { host, dateFrom, limit, offset };
 
-      let response = await context.fetcher.fetch({
-        method: "POST",
-        url: "https://api.opencollective.com/graphql/v2",
+      const response = await context.fetcher.fetch({
+        method: 'POST',
+        url: 'https://api.opencollective.com/graphql/v2',
         headers: {
-          "Content-Type": "application/json",
+          'Content-Type': 'application/json',
         },
         body: JSON.stringify({ query, variables }),
       });
 
-      let res = await response.body.data.accounts;
-      let rows = []
-      let total = res.totalCount as number
-      let new_offset = res.offset as number;
+      const res = await response.body.data.accounts;
+      const rows = [];
+      const total = res.totalCount as number;
+      const new_offset = res.offset as number;
 
       let continuation;
-      if ((limit + new_offset) < total) {
+      if (limit + new_offset < total) {
         continuation = {
           offset: new_offset + limit,
         };
       }
 
-      res.nodes.forEach((account) => {
-        account.orders.nodes.forEach((order) => {
-          let row = {
+      res.nodes.forEach(account => {
+        account.orders.nodes.forEach(order => {
+          const row = {
             id: order.id,
             legacyId: order.legacyId,
             amountValueInCents: order.amount.valueInCents,
@@ -1046,55 +1065,53 @@ pack.addSyncTable({
             createdByAccountEmail: order.createdByAccount.emails ? order.createdByAccount.emails[0] : null,
             memo: order.memo,
             paymentMethodName: order.paymentMethod ? order.paymentMethod.name : null,
-            pendingContributionExpectedAt: order.pendingContributionData ? order.pendingContributionData.expectedAt : null,
+            pendingContributionExpectedAt: order.pendingContributionData
+              ? order.pendingContributionData.expectedAt
+              : null,
             status: order.status,
             toAccountSlug: order.toAccount.slug,
             toAccountParentSlug: order.toAccount.parent ? order.toAccount.parent.slug : null,
             processedAt: order.processedAt,
             description: order.description,
             data: order.data ? JSON.stringify(order.data) : null,
-          }
+          };
           rows.push(row);
-        })
-      })
-      
+        });
+      });
+
       return {
         result: rows,
         continuation: continuation,
       };
-      
     },
   },
 });
 
 // HostedCollectives and stats
 pack.addSyncTable({
-  name: "HostedCollectives",
-  description: "Lists all collectives.",
-  identityName: "HostedCollective",
+  name: 'HostedCollectives',
+  description: 'Lists all collectives.',
+  identityName: 'HostedCollective',
   schema: CollectiveSchema,
   formula: {
-    name: "SyncHostedCollectives",
-    description: "Syncs collectives.",
+    name: 'SyncHostedCollectives',
+    description: 'Syncs collectives.',
 
     parameters: [
       coda.makeParameter({
         type: coda.ParameterType.String,
-        name: "slug",
-        description:
-          "The slug of the host you want to retrieve collectives from.",
+        name: 'slug',
+        description: 'The slug of the host you want to retrieve collectives from.',
       }),
       coda.makeParameter({
         type: coda.ParameterType.Number,
-        name: "limit",
-        description:
-          "The number of collectives you want to retrieve per request.",
-      })
+        name: 'limit',
+        description: 'The number of collectives you want to retrieve per request.',
+      }),
     ],
 
     execute: async function (args, context) {
-
-      let [slug, limit] = args;
+      const [slug, limit] = args;
 
       const query = `
       query SearchAccounts(
@@ -1234,44 +1251,44 @@ pack.addSyncTable({
       }
       `;
 
-      let host = { slug: slug };
+      const host = { slug: slug };
       let offset = 0;
       if (context.sync.continuation) {
         offset = context.sync.continuation.offset as number;
       }
 
-      const variables = { host, limit, offset};
+      const variables = { host, limit, offset };
 
-      let response = await context.fetcher.fetch({
-        method: "POST",
-        url: "https://api.opencollective.com/graphql/v2",
+      const response = await context.fetcher.fetch({
+        method: 'POST',
+        url: 'https://api.opencollective.com/graphql/v2',
         headers: {
-          "Content-Type": "application/json",
+          'Content-Type': 'application/json',
         },
         body: JSON.stringify({ query, variables }),
       });
 
-      let res = await response.body.data.accounts;
+      const res = await response.body.data.accounts;
       let rows = res.nodes;
-      let total = res.totalCount as number
-      let new_offset = res.offset as number;
+      const total = res.totalCount as number;
+      const new_offset = res.offset as number;
 
       let continuation;
-      if ((limit + new_offset) < total) {
+      if (limit + new_offset < total) {
         continuation = {
           offset: new_offset + limit,
         };
       }
 
-      rows = rows.map((row) => {
+      rows = rows.map(row => {
         return {
           ...row,
-          admins: row.ADMINS.nodes.map((node) => {
+          admins: row.ADMINS.nodes.map(node => {
             return {
               role: node.role,
               name: node.account.name,
               slug: node.account.slug,
-              email: node.account.emails? node.account.emails[0] : null,
+              email: node.account.emails ? node.account.emails[0] : null,
             };
           }),
           balanceValueInCents: row.ALL.balance.valueInCents,
@@ -1296,39 +1313,38 @@ pack.addSyncTable({
         result: rows,
         continuation: continuation,
       };
-
     },
   },
 });
 
 // Updates of collectives on the host
 pack.addSyncTable({
-  name: "UpdatesFromHostedCollectives",
-  description: "Lists all updates of collectives on the host.",
-  identityName: "UpdateFromHostedCollective",
+  name: 'UpdatesFromHostedCollectives',
+  description: 'Lists all updates of collectives on the host.',
+  identityName: 'UpdateFromHostedCollective',
   schema: UpdateSchema,
   formula: {
-    name: "SyncUpdatesFromHostedCollectives",
-    description: "Syncs updates of collectives on the host.",
+    name: 'SyncUpdatesFromHostedCollectives',
+    description: 'Syncs updates of collectives on the host.',
     parameters: [
       coda.makeParameter({
         type: coda.ParameterType.String,
-        name: "host",
-        description: "The slug of the host you want to retrieve updates from.",
+        name: 'host',
+        description: 'The slug of the host you want to retrieve updates from.',
       }),
       coda.makeParameter({
         type: coda.ParameterType.Number,
-        name: "limit",
-        description: "The number of updates you want to retrieve per request.",
+        name: 'limit',
+        description: 'The number of updates you want to retrieve per request.',
       }),
       coda.makeParameter({
         type: coda.ParameterType.Number,
-        name: "days",
-        description: "The number of days you want to retrieve updates from.",
+        name: 'days',
+        description: 'The number of days you want to retrieve updates from.',
       }),
     ],
     execute: async function (args, context) {
-      let updates_query = `
+      const updates_query = `
       query Updates($host: [AccountReferenceInput], $limit: Int, $offset: Int) {
         updates(host: $host, limit: $limit, offset: $offset) {
           totalCount
@@ -1367,14 +1383,14 @@ pack.addSyncTable({
       function extractImagesFromHTML(html) {
         const regex = /<img[^>]+src="?([^"\s]+)"?\s*\/?>/g;
         let match;
-        let images = [];
+        const images = [];
         while ((match = regex.exec(html)) !== null) {
           images.push(match[1]);
         }
         return images;
       }
 
-      let [host, limit, days] = args;
+      const [host, limit, days] = args;
 
       let offset = 0;
       if (context.sync.continuation) {
@@ -1383,19 +1399,19 @@ pack.addSyncTable({
 
       const variables = { host: { slug: host }, limit, offset };
 
-      let response = await context.fetcher.fetch({
-        method: "POST",
-        url: "https://api.opencollective.com/graphql/v2",
+      const response = await context.fetcher.fetch({
+        method: 'POST',
+        url: 'https://api.opencollective.com/graphql/v2',
         headers: {
-          "Content-Type": "application/json",
+          'Content-Type': 'application/json',
         },
         body: JSON.stringify({ query: updates_query, variables }),
       });
 
-      let res = await response.body.data.updates;
-      let rows = [];
+      const res = await response.body.data.updates;
+      const rows = [];
       let new_offset = res.offset as number;
-      
+
       const dateFrom = new Date();
       dateFrom.setDate(dateFrom.getDate() - days);
 
@@ -1406,7 +1422,7 @@ pack.addSyncTable({
           break;
         }
 
-        let row = {
+        const row = {
           id: update.id,
           title: update.title,
           createdAt: update.createdAt,
@@ -1420,13 +1436,13 @@ pack.addSyncTable({
           fromAccountName: update.fromAccount.name,
           fromAccountImageUrl: update.fromAccount.imageUrl,
           images: extractImagesFromHTML(update.html),
-          accountSocialLinks: update.account.socialLinks.map((link) => {
+          accountSocialLinks: update.account.socialLinks.map(link => {
             return {
               type: link.type,
               url: link.url,
             };
           }),
-          fromAccountSocialLinks: update.fromAccount.socialLinks.map((link) => {
+          fromAccountSocialLinks: update.fromAccount.socialLinks.map(link => {
             return {
               type: link.type,
               url: link.url,
@@ -1443,7 +1459,7 @@ pack.addSyncTable({
           offset: new_offset,
         };
       }
-    
+
       return {
         result: rows,
         continuation: continuation,

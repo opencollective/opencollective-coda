@@ -1,0 +1,8 @@
+{
+  "extends": ["plugin:@typescript-eslint/recommended", "plugin:import/typescript", "opencollective"],
+  "parser": "@typescript-eslint/parser",
+  "rules": {
+    "prefer-const": "warn",
+    "camelcase": "off"
+  }
+}
