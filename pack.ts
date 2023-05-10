@@ -1,4 +1,5 @@
 import * as coda from "@codahq/packs-sdk";
+import percentile = require("percentile");
 import exp = require("constants");
 export const pack = coda.newPack();
 
@@ -722,6 +723,8 @@ pack.addSyncTable({
         };
       }
 
+      const percentile = require("percentile");
+
       type Percentiles = {
         'sourceData': string;
         'p10th': number;
@@ -730,9 +733,9 @@ pack.addSyncTable({
         'p75th': number;
         'p90th': number;
       };
-
+      
       function calculatePercentiles(data: number[], source: string): Percentiles {
-
+      
         // If the array is smaller than 10 elements, return 0 for all percentiles.
         if (!data || data.length < 10) {
           return {
@@ -744,56 +747,40 @@ pack.addSyncTable({
             'p90th': 0
           };
         }
-
-        // Sort the array in ascending order.
-        data.sort((a, b) => a - b);
-
-        // Function to calculate percentile.
-        function percentile(p: number): number {
-          if (data.length === 0) {
-            return 0;
-          }
-          const index = p * (data.length - 1);
-          const lower = Math.floor(index);
-          const upper = Math.ceil(index);
-          const weight = index % 1;
-          if (upper >= data.length) {
-            return data[lower];
-          }
-          return data[lower] * (1 - weight) + data[upper] * weight;
-        }
+      
+        // Calculate the percentiles using the percentile library.
+        const percentiles = percentile([10, 25, 50, 75, 90], data);
       
         // Return the calculated percentiles.
         return {
           'sourceData': source,
-          'p10th': percentile(0.10),
-          'p25th': percentile(0.25),
-          'p50th': percentile(0.50),
-          'p75th': percentile(0.75),
-          'p90th': percentile(0.90)
+          'p10th': percentiles[0],
+          'p25th': percentiles[1],
+          'p50th': percentiles[2],
+          'p75th': percentiles[3],
+          'p90th': percentiles[4]
         };
       }
-
+      
       function findPercentileRange(num: number, percentiles: Percentiles): string {
         if(!percentiles) return 'No data';
         // If all percentiles are 0, return 'No data'.
         if (percentiles['p10th'] === 0 && percentiles['p25th'] === 0 && percentiles['p50th'] === 0 && percentiles['p75th'] === 0 && percentiles['p90th'] === 0) {
           return 'No data';
         }
-        if (num < percentiles['p10th']) {
-          return 'Bottom 10%';
-        } else if (num < percentiles['p25th']) {
-          return '10% - 25%';
+        if (num < percentiles['p25th']) {
+          return '25%';
         } else if (num < percentiles['p50th']) {
-          return '25% - 50%';
-        } else if (num < percentiles['75th']) {
-          return '50% - 75%';
+          return '50%';
+        } else if (num < percentiles['p75th']) {
+          return '75%';
         } else if (num < percentiles['p90th']) {
-          return '75% - 90%';
+          return '90%';
         } else {
-          return 'Top 10%';
-        }
+          return '90%+';
+        }        
       }
+      
 
       function getAllTransactionAmounts(account) {
         if (!account.transactions) return null;
