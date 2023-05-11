@@ -1,0 +1,13 @@
+{
+  "projects": {
+    "opencollective": {
+      "schemaPath": "schema.graphql",
+      "extensions": {
+        "endpoints": {
+          "dev": "http://localhost:3060/graphql",
+          "prod": "https://api.opencollective.com/graphql"
+        }
+      }
+    }
+  }
+}

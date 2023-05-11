@@ -3,6 +3,20 @@ import percentile from 'percentile';
 // import exp = require("constants");
 export const pack = coda.newPack();
 
+function gql(literals, ...expressions) {
+  let string = '';
+
+  for (const [index, literal] of literals.entries()) {
+    string += literal;
+
+    if (index in expressions) {
+      string += expressions[index];
+    }
+  }
+
+  return string;
+}
+
 // This code is in alpha and is meant for internal use in Open Collective at the moment.
 
 pack.addNetworkDomain('api.opencollective.com');
@@ -561,104 +575,104 @@ pack.addSyncTable({
     execute: async function (args, context) {
       const [slug, limit, days, status] = args;
 
-      const query = `
-      query searchExpenses(
-        $host: AccountReferenceInput, 
-        $status: ExpenseStatusFilter,
-        $dateFrom: DateTime,
-        $limit: Int, 
-        $offset: Int
-        ) 
-        {
-        expenses(host: $host, dateFrom: $dateFrom, limit: $limit, offset: $offset, status: $status) {
-          limit
-          offset
-          totalCount
-          nodes {
-            account {
-              slug
-              name
-              transactions(limit: 100, type: DEBIT, kind: EXPENSE) {
-                limit
-                offset
-                totalCount
-                nodes {
-                  type
-                  amountInHostCurrency {
-                    valueInCents
-                  }
-                }
-              }
-              ... on AccountWithParent {
-                parent {
-                  slug
-                  name
-                }
-              }
-              ... on AccountWithHost {
-                host {
-                  slug                }
-              } 
-            }
-            activities {
-              createdAt
-              data
-              fromAccount {
-                slug
-                emails
-              }
-              isSystem
-              type
-            }
-            amountV2(currencySource: ACCOUNT) {
-              valueInCents
-            }
-            createdAt
-            createdByAccount {
-              slug
-              emails
-              transactions(limit: 100, type: CREDIT, kind: EXPENSE) {
-                limit
-                offset
-                totalCount
-                nodes {
-                  type
-                  amountInHostCurrency {
-                    valueInCents
-                  }
-                }
-              }
-            }
-            currency
-            description
-            id
-            legacyId
-            payee {
-              slug
-              emails
-              type
-            }
-            payoutMethod {
-              id
-              type
-              name
-            }
-            status
-            tags
-            type
-            virtualCard {
-              id
-              name
-              assignee {
-                slug
-              }
+      const query = gql`
+        query searchExpenses(
+          $host: AccountReferenceInput
+          $status: ExpenseStatusFilter
+          $dateFrom: DateTime
+          $limit: Int
+          $offset: Int
+        ) {
+          expenses(host: $host, dateFrom: $dateFrom, limit: $limit, offset: $offset, status: $status) {
+            limit
+            offset
+            totalCount
+            nodes {
               account {
                 slug
+                name
+                transactions(limit: 100, type: DEBIT, kind: EXPENSE) {
+                  limit
+                  offset
+                  totalCount
+                  nodes {
+                    type
+                    amountInHostCurrency {
+                      valueInCents
+                    }
+                  }
+                }
+                ... on AccountWithParent {
+                  parent {
+                    slug
+                    name
+                  }
+                }
+                ... on AccountWithHost {
+                  host {
+                    slug
+                  }
+                }
+              }
+              activities {
+                createdAt
+                data
+                fromAccount {
+                  slug
+                  emails
+                }
+                isSystem
+                type
+              }
+              amountV2(currencySource: ACCOUNT) {
+                valueInCents
+              }
+              createdAt
+              createdByAccount {
+                slug
+                emails
+                transactions(limit: 100, type: CREDIT, kind: EXPENSE) {
+                  limit
+                  offset
+                  totalCount
+                  nodes {
+                    type
+                    amountInHostCurrency {
+                      valueInCents
+                    }
+                  }
+                }
+              }
+              currency
+              description
+              id
+              legacyId
+              payee {
+                slug
+                emails
+                type
+              }
+              payoutMethod {
+                id
+                type
+                name
+              }
+              status
+              tags
+              type
+              virtualCard {
+                id
+                name
+                assignee {
+                  slug
+                }
+                account {
+                  slug
+                }
               }
             }
           }
         }
-      }      
       `;
 
       let offset = 0;
@@ -949,72 +963,64 @@ pack.addSyncTable({
     execute: async function (args, context) {
       const [slug, limit, months] = args;
 
-      const query = `
-      query SearchOrders(
-        $host: [AccountReferenceInput]
-        $dateFrom: DateTime
-        $limit: Int
-        $offset: Int
-      ) {
-        accounts(host: $host, limit: $limit, offset: $offset) {
-          limit
-          offset
-          totalCount
-          nodes
-          {
-            slug
-            orders(dateFrom: $dateFrom, limit: 1000)
-            {
-              nodes
-               {
-                 id
-                 legacyId
-                 amount {
-                   currency
-                   valueInCents
-                 }
-                 totalAmount {
-                   currency
-                   valueInCents
-                 } 
-                 createdAt
-                 updatedAt
-                 createdByAccount {
-                   slug
-                   emails
-                 }
-                 memo
-                 paymentMethod {
-                   name
-                 }
-                 pendingContributionData {
-                   expectedAt
-                   paymentMethod
-                   ponumber
-                   memo
-                   fromAccountInfo {
-                     name
-                     email
-                   }
-                 }
-                 needsConfirmation
-                 status
-                 toAccount {
-                   slug
-                   ... on AccountWithParent {
-                     parent {
-                       slug
-                     }
-                   }
-                 }
-                 processedAt
-                 description
-                 data
-               }
-            } 
+      const query = gql`
+        query SearchOrders($host: [AccountReferenceInput], $dateFrom: DateTime, $limit: Int, $offset: Int) {
+          accounts(host: $host, limit: $limit, offset: $offset) {
+            limit
+            offset
+            totalCount
+            nodes {
+              slug
+              orders(dateFrom: $dateFrom, limit: 1000) {
+                nodes {
+                  id
+                  legacyId
+                  amount {
+                    currency
+                    valueInCents
+                  }
+                  totalAmount {
+                    currency
+                    valueInCents
+                  }
+                  createdAt
+                  updatedAt
+                  createdByAccount {
+                    slug
+                    emails
+                  }
+                  memo
+                  paymentMethod {
+                    name
+                  }
+                  pendingContributionData {
+                    expectedAt
+                    paymentMethod
+                    ponumber
+                    memo
+                    fromAccountInfo {
+                      name
+                      email
+                    }
+                  }
+                  needsConfirmation
+                  status
+                  toAccount {
+                    slug
+                    ... on AccountWithParent {
+                      parent {
+                        slug
+                      }
+                    }
+                  }
+                  processedAt
+                  description
+                  data
+                }
+              }
+            }
           }
         }
-      }
       `;
 
       const host = { slug: slug };
@@ -1113,142 +1119,98 @@ pack.addSyncTable({
     execute: async function (args, context) {
       const [slug, limit] = args;
 
-      const query = `
-      query SearchAccounts(
-        $host: [AccountReferenceInput]
-        $limit: Int
-        $offset: Int
-      ) {
-        accounts(type: [COLLECTIVE, FUND], limit: $limit, offset: $offset, host: $host) {
-          totalCount
-          offset
-          limit
-          nodes {
-            name
-            slug
-            currency
-            description
-            isFrozen
-            imageUrl
-            tags
-            createdAt
-            location {
-              country
-            }
-            ... on AccountWithHost {
-              host {
-                slug
-                name
+      const query = gql`
+        query SearchAccounts($host: [AccountReferenceInput], $limit: Int, $offset: Int) {
+          accounts(type: [COLLECTIVE, FUND], limit: $limit, offset: $offset, host: $host) {
+            totalCount
+            offset
+            limit
+            nodes {
+              name
+              slug
+              currency
+              description
+              isFrozen
+              imageUrl
+              tags
+              createdAt
+              location {
+                country
               }
-            approvedAt
-            hostFeesStructure
-            hostFeePercent
-            }
-            ADMINS: members(role: ADMIN) {
-              nodes {
-                role
-                account {
-                  name
+              ... on AccountWithHost {
+                host {
                   slug
-                  emails
+                  name
+                }
+                approvedAt
+                hostFeesStructure
+                hostFeePercent
+              }
+              ADMINS: members(role: ADMIN) {
+                nodes {
+                  role
+                  account {
+                    name
+                    slug
+                    emails
+                  }
                 }
               }
-            }
-            ALL: stats {
-              balance {
+              ALL: stats {
+                balance {
                   valueInCents
                   currency
+                }
+                totalAmountSpent(net: true, includeChildren: true) {
+                  valueInCents
+                }
+                totalAmountReceived(net: true, includeChildren: true) {
+                  valueInCents
+                }
               }
-              totalAmountSpent(net: true, includeChildren: true) {
-                valueInCents
+              PAST_12_MONTHS: stats {
+                totalAmountSpent(net: true, includeChildren: true, periodInMonths: 12) {
+                  valueInCents
+                }
+                totalAmountReceived(net: true, periodInMonths: 12, includeChildren: true) {
+                  valueInCents
+                }
               }
-              totalAmountReceived(net: true, includeChildren: true) {
-                valueInCents
+              PAST_9_MONTHS: stats {
+                totalAmountSpent(net: true, includeChildren: true, periodInMonths: 9) {
+                  valueInCents
+                }
+                totalAmountReceived(net: true, periodInMonths: 9, includeChildren: true) {
+                  valueInCents
+                }
               }
-            }
-            PAST_12_MONTHS: stats {
-              totalAmountSpent(
-                net: true
-                includeChildren: true
-                periodInMonths: 12
-              ) {
-                valueInCents
+              PAST_6_MONTHS: stats {
+                totalAmountSpent(net: true, includeChildren: true, periodInMonths: 6) {
+                  valueInCents
+                }
+                totalAmountReceived(net: true, periodInMonths: 6, includeChildren: true) {
+                  valueInCents
+                }
               }
-              totalAmountReceived(
-                net: true
-                periodInMonths: 12
-                includeChildren: true
-              ) {
-                valueInCents
+              PAST_3_MONTHS: stats {
+                totalAmountSpent(net: true, includeChildren: true, periodInMonths: 3) {
+                  valueInCents
+                }
+                totalAmountReceived(net: true, periodInMonths: 3, includeChildren: true) {
+                  valueInCents
+                }
               }
-            }
-            PAST_9_MONTHS: stats {
-              totalAmountSpent(
-                net: true
-                includeChildren: true
-                periodInMonths: 9
-              ) {
-                valueInCents
-              }
-              totalAmountReceived(
-                net: true
-                periodInMonths: 9
-                includeChildren: true
-              ) {
-                valueInCents
-              }
-            }
-            PAST_6_MONTHS: stats {
-              totalAmountSpent(
-                net: true
-                includeChildren: true
-                periodInMonths: 6
-              ) {
-                valueInCents
-              }
-              totalAmountReceived(
-                net: true
-                periodInMonths: 6
-                includeChildren: true
-              ) {
-                valueInCents
-              }
-            }
-            PAST_3_MONTHS: stats {
-              totalAmountSpent(
-                net: true
-                includeChildren: true
-                periodInMonths: 3
-              ) {
-                valueInCents
-              }
-              totalAmountReceived(
-                net: true
-                periodInMonths: 3
-                includeChildren: true
-              ) {
-                valueInCents
-              }
-            }
-            PAST_MONTH: stats {
-              totalAmountSpent(
-                net: true
-                includeChildren: true
-                periodInMonths: 1
-              ) {
-                valueInCents
-              }
-              totalAmountReceived(
-                net: true
-                periodInMonths: 1
-                includeChildren: true
-              ) {
-                valueInCents
+              PAST_MONTH: stats {
+                totalAmountSpent(net: true, includeChildren: true, periodInMonths: 1) {
+                  valueInCents
+                }
+                totalAmountReceived(net: true, periodInMonths: 1, includeChildren: true) {
+                  valueInCents
+                }
               }
             }
           }
         }
-      }
       `;
 
       const host = { slug: slug };
@@ -1344,39 +1306,39 @@ pack.addSyncTable({
       }),
     ],
     execute: async function (args, context) {
-      const updates_query = `
-      query Updates($host: [AccountReferenceInput], $limit: Int, $offset: Int) {
-        updates(host: $host, limit: $limit, offset: $offset) {
-          totalCount
-          offset
-          nodes {
-            id
-            title
-            createdAt
-            slug
-            summary
-            html
-            account {
-              slug
-              imageUrl
-              name
-              socialLinks {
-                type
-                url
-              }
-            }
-            fromAccount {
+      const updates_query = gql`
+        query Updates($host: [AccountReferenceInput], $limit: Int, $offset: Int) {
+          updates(host: $host, limit: $limit, offset: $offset) {
+            totalCount
+            offset
+            nodes {
               id
-              name
-              imageUrl
-              socialLinks {
-                type
-                url
+              title
+              createdAt
+              slug
+              summary
+              html
+              account {
+                slug
+                imageUrl
+                name
+                socialLinks {
+                  type
+                  url
+                }
+              }
+              fromAccount {
+                id
+                name
+                imageUrl
+                socialLinks {
+                  type
+                  url
+                }
               }
             }
           }
         }
-      }
       `;
 
       // Utility function to extract images from HTML content

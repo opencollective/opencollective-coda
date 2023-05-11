@@ -1,8 +1,13 @@
 {
   "extends": ["plugin:@typescript-eslint/recommended", "plugin:import/typescript", "opencollective"],
   "parser": "@typescript-eslint/parser",
+  "plugins": ["graphql"],
   "rules": {
     "prefer-const": "warn",
-    "camelcase": "off"
+    "camelcase": "off",
+    "graphql/template-strings": ["error", { "env": "apollo", "projectName": "opencollective" }],
+    "graphql/named-operations": ["error"],
+    "graphql/capitalized-type-name": ["error"],
+    "graphql/no-deprecated-fields": ["warn"]
   }
 }
