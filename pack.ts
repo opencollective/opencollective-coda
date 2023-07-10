@@ -505,6 +505,11 @@ const CollectiveSchema = coda.makeObjectSchema({
       type: coda.ValueType.String,
       description: 'The description of the collective.',
     },
+    socialLinks: {
+      type: coda.ValueType.Array,
+      description: 'The social links of the collective.',
+      items: SocialLinkSchema,
+    },
     locationName: {
       type: coda.ValueType.String,
       description: 'The location name of the collective.',
@@ -1309,6 +1314,10 @@ pack.addSyncTable({
           limit
           nodes {
             name
+            socialLinks {
+              type
+              url
+            }
             slug
             currency
             description
@@ -1419,7 +1428,7 @@ pack.addSyncTable({
                 }
               }
             }
-            JUSTWORKS: transactions(limit: 1000, includeChildrenTransactions: true, hasExpense: true, fromAccount: {slug: "justworks"}) {
+            JUSTWORKS: transactions(limit: 1000, includeChildrenTransactions: true, hasExpense: true, searchTerm: "Employment costs") {
               totalCount
               nodes {
                 description
@@ -1670,6 +1679,12 @@ pack.addSyncTable({
               approvalCount: countAdminActivities(row, node.account.slug),
             };
           }),
+          socialLinks: row.socialLinks ? row.socialLinks.map(link => {
+            return {
+                type: link.type,
+                url: link.url,
+            };
+            }) : [],        
           balanceValueInCents: row.ALL.balance.valueInCents,
           balanceCurrency: row.ALL.balance.currency,
           locationName: row.location ? row.location.name : null,
