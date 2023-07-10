@@ -13,6 +13,20 @@ pack.setUserAuthentication({
   tokenUrl: 'https://opencollective.com/oauth/token',
 });
 
+// Utility functions
+
+function extractImagesFromHTML(html) {
+  const regex = /<img[^>]+src="?([^"\s]+)"?\s*\/?>/g;
+  let match;
+  const images = [];
+  while ((match = regex.exec(html)) !== null) {
+    images.push(match[1]);
+  }
+  return images;
+}
+
+// Schema definitions
+
 const MemberSchema = coda.makeObjectSchema({
   properties: {
     slug: {
@@ -31,132 +45,32 @@ const MemberSchema = coda.makeObjectSchema({
       type: coda.ValueType.String,
       description: 'The email of the member.',
     },
+    approvalCount: {
+      type: coda.ValueType.Number,
+      description: 'The number of approvals the member has made.',
+    },
   },
   displayProperty: 'name',
   idProperty: 'slug',
 });
 
-const CollectiveSchema = coda.makeObjectSchema({
+const ExpensesTagsSchema = coda.makeObjectSchema({
   properties: {
-    collectiveId: {
+    id: {
+      type: coda.ValueType.Number,
+      description: 'The ID of the tag.',
+    },
+    tag: {
       type: coda.ValueType.String,
-      description: 'The ID of the collective.',
+      description: 'The tag.',
     },
-    createdAt: {
-      type: coda.ValueType.String,
-      description: 'The date the collective was created.',
-    },
-    approvedAt: {
-      type: coda.ValueType.String,
-      description: 'The date the collective was approved.',
-    },
-    admins: {
-      type: coda.ValueType.Array,
-      items: MemberSchema,
-      description: 'The admins of the collective.',
-    },
-    name: {
-      type: coda.ValueType.String,
-      description: 'The name of the collective.',
-    },
-    slug: {
-      type: coda.ValueType.String,
-      description: 'The slug of the collective.',
-    },
-    description: {
-      type: coda.ValueType.String,
-      description: 'The description of the collective.',
-    },
-    type: {
-      type: coda.ValueType.String,
-      description: 'The type of the collective.',
-    },
-    currency: {
-      type: coda.ValueType.String,
-      description: 'The currency of the collective.',
-    },
-    isFrozen: {
-      type: coda.ValueType.Boolean,
-      description: 'Whether the collective is frozen.',
-    },
-    tags: {
-      type: coda.ValueType.Array,
-      items: {
-        type: coda.ValueType.String,
-      },
-      description: 'The tags of the collective.',
-    },
-    balanceValueInCents: {
+    count: {
       type: coda.ValueType.Number,
-      description: 'The balance of the collective in cents.',
-    },
-    balanceCurrency: {
-      type: coda.ValueType.String,
-      description: 'The currency of the collective balance.',
-    },
-    totalAmountSpentValueInCents: {
-      type: coda.ValueType.Number,
-      description: 'The total amount spent of the collective in cents.',
-    },
-    totalAmountReceivedValueInCents: {
-      type: coda.ValueType.Number,
-      description: 'The total amount received of the collective in cents.',
-    },
-    totalAmountSpentValueInCentsPast12Months: {
-      type: coda.ValueType.Number,
-      description: 'The total amount spent of the collective in cents in the past 12 months.',
-    },
-    totalAmountReceivedValueInCentsPast12Months: {
-      type: coda.ValueType.Number,
-      description: 'The total amount received of the collective in cents in the past 12 months.',
-    },
-    totalAmountSpentValueInCentsPast9Months: {
-      type: coda.ValueType.Number,
-      description: 'The total amount spent of the collective in cents in the past 9 months.',
-    },
-    totalAmountReceivedValueInCentsPast9Months: {
-      type: coda.ValueType.Number,
-      description: 'The total amount received of the collective in cents in the past 9 months.',
-    },
-    totalAmountSpentValueInCentsPast6Months: {
-      type: coda.ValueType.Number,
-      description: 'The total amount spent of the collective in cents in the past 6 months.',
-    },
-    totalAmountReceivedValueInCentsPast6Months: {
-      type: coda.ValueType.Number,
-      description: 'The total amount received of the collective in cents in the past 6 months.',
-    },
-    totalAmountSpentValueInCentsPast3Months: {
-      type: coda.ValueType.Number,
-      description: 'The total amount spent of the collective in cents in the past 3 months.',
-    },
-    totalAmountReceivedValueInCentsPast3Months: {
-      type: coda.ValueType.Number,
-      description: 'The total amount received of the collective in cents in the past 3 months.',
-    },
-    totalAmountSpentValueInCentsPast1Month: {
-      type: coda.ValueType.Number,
-      description: 'The total amount spent of the collective in cents in the past 1 month.',
-    },
-    totalAmountReceivedValueInCentsPast1Month: {
-      type: coda.ValueType.Number,
-      description: 'The total amount received of the collective in cents in the past 1 month.',
-    },
-    hostFeesStructure: {
-      type: coda.ValueType.String,
-      description: 'The host fees structure of the collective.',
-    },
-    hostFeePercent: {
-      type: coda.ValueType.Number,
-      description: 'The host fee percent of the collective.',
-    },
-    totalFinancialContributors: {
-      type: coda.ValueType.Number,
-      description: 'The total financial contributors of the collective.',
+      description: 'The number of times the tag has been used.',
     },
   },
-  displayProperty: 'name',
-  idProperty: 'slug',
+  displayProperty: 'tag',
+  idProperty: 'id',
 });
 
 const OrderSchema = coda.makeObjectSchema({
@@ -273,6 +187,33 @@ const PercentilesSchema = coda.makeObjectSchema({
   displayProperty: 'sourceData',
 });
 
+const CommentSchema = coda.makeObjectSchema({
+  properties: {
+    id: {
+      type: coda.ValueType.String,
+      description: 'The ID of the comment.',
+    },
+    createdAt: {
+      type: coda.ValueType.String,
+      description: 'The date the comment was created.',
+    },
+    html: {
+      type: coda.ValueType.String,
+      description: 'The HTML of the comment.',
+    },
+    accountSlug: {
+      type: coda.ValueType.String,
+      description: 'The slug of the account that created the comment.',
+    },
+    fromAccountSlug: {
+      type: coda.ValueType.String,
+      description: 'The slug of the account that created the comment.',
+    },
+  },
+  idProperty: 'id',
+  displayProperty: 'html',
+});
+
 const ExpenseSchema = coda.makeObjectSchema({
   properties: {
     accountSlug: {
@@ -315,6 +256,11 @@ const ExpenseSchema = coda.makeObjectSchema({
     commentsCount: {
       type: coda.ValueType.Number,
       description: 'The number of comments on the expense.',
+    },
+    comments: {
+      type: coda.ValueType.Array,
+      description: 'The comments on the expense.',
+      items: CommentSchema,
     },
     createdAt: {
       type: coda.ValueType.String,
@@ -524,6 +470,232 @@ const UpdateSchema = coda.makeObjectSchema({
   displayProperty: 'title',
 });
 
+const CollectiveSchema = coda.makeObjectSchema({
+  properties: {
+    collectiveId: {
+      type: coda.ValueType.String,
+      description: 'The ID of the collective.',
+    },
+    createdAt: {
+      type: coda.ValueType.String,
+      description: 'The date the collective was created.',
+    },
+    approvedAt: {
+      type: coda.ValueType.String,
+      description: 'The date the collective was approved.',
+    },
+    hostFeePercent: {
+      type: coda.ValueType.Number,
+      description: 'The host fee percent of the collective.',
+    },
+    admins: {
+      type: coda.ValueType.Array,
+      items: MemberSchema,
+      description: 'The admins of the collective.',
+    },
+    name: {
+      type: coda.ValueType.String,
+      description: 'The name of the collective.',
+    },
+    slug: {
+      type: coda.ValueType.String,
+      description: 'The slug of the collective.',
+    },
+    description: {
+      type: coda.ValueType.String,
+      description: 'The description of the collective.',
+    },
+    locationName: {
+      type: coda.ValueType.String,
+      description: 'The location name of the collective.',
+    },
+    locationAddress: {
+      type: coda.ValueType.String,
+      description: 'The location address of the collective.',
+    },
+    locationCountry: {
+      type: coda.ValueType.String,
+      description: 'The location country of the collective.',
+    },
+    type: {
+      type: coda.ValueType.String,
+      description: 'The type of the collective.',
+    },
+    currency: {
+      type: coda.ValueType.String,
+      description: 'The currency of the collective.',
+    },
+    isFrozen: {
+      type: coda.ValueType.Boolean,
+      description: 'Whether the collective is frozen.',
+    },
+    isActive: {
+      type: coda.ValueType.Boolean,
+      description: 'Whether the collective is active.',
+    },
+    isApproved: {
+      type: coda.ValueType.Boolean,
+      description: 'Whether the collective is approved.',
+    },
+    lastExpenseDate: {
+      type: coda.ValueType.String,
+      description: 'The date of the last expense.',
+    },
+    lastUpdateDate: {
+      type: coda.ValueType.String,
+      description: 'The date of the last update.',
+    },
+    lastContributionDate: {
+      type: coda.ValueType.String,
+      description: 'The date of the last contribution.',
+    },
+    tags: {
+      type: coda.ValueType.Array,
+      items: {
+        type: coda.ValueType.String,
+      },
+      description: 'The tags of the collective.',
+    },
+    balanceValueInCents: {
+      type: coda.ValueType.Number,
+      description: 'The balance of the collective in cents.',
+    },
+    balanceCurrency: {
+      type: coda.ValueType.String,
+      description: 'The currency of the collective balance.',
+    },
+    totalAmountSpentValueInCents: {
+      type: coda.ValueType.Number,
+      description: 'The total amount spent of the collective in cents.',
+    },
+    totalAmountReceivedValueInCents: {
+      type: coda.ValueType.Number,
+      description: 'The total amount received of the collective in cents.',
+    },
+    expenseCount: {
+      type: coda.ValueType.Number,
+      description: 'The total number of expenses to the collective.',
+    },
+    contributorsCount: {
+      type: coda.ValueType.Number,
+      description: 'The total number of contributors to the collective.',
+    },
+    contributionsCount: {
+      type: coda.ValueType.Number,
+      description: 'The total number of contributions to the collective.',
+    },
+    totalAmountSpentValueInCentsPast12Months: {
+      type: coda.ValueType.Number,
+      description: 'The total amount spent of the collective in cents in the past 12 months.',
+    },
+    totalAmountReceivedValueInCentsPast12Months: {
+      type: coda.ValueType.Number,
+      description: 'The total amount received of the collective in cents in the past 12 months.',
+    },
+    contributorsCountPast12Months: {
+      type: coda.ValueType.Number,
+      description: 'The total number of contributors to the collective in the past 12 months.',
+    },
+    contributionsCountPast12Months: {
+      type: coda.ValueType.Number,
+      description: 'The total number of contributions to the collective in the past 12 months.',
+    },
+    totalAmountSpentValueInCentsPast9Months: {
+      type: coda.ValueType.Number,
+      description: 'The total amount spent of the collective in cents in the past 9 months.',
+    },
+    totalAmountReceivedValueInCentsPast9Months: {
+      type: coda.ValueType.Number,
+      description: 'The total amount received of the collective in cents in the past 9 months.',
+    },
+    contributorsCountPast9Months: {
+      type: coda.ValueType.Number,
+      description: 'The total number of contributors to the collective in the past 9 months.',
+    },
+    contributionsCountPast9Months: {
+      type: coda.ValueType.Number,
+      description: 'The total number of contributions to the collective in the past 9 months.',
+    },
+    totalAmountSpentValueInCentsPast6Months: {
+      type: coda.ValueType.Number,
+      description: 'The total amount spent of the collective in cents in the past 6 months.',
+    },
+    totalAmountReceivedValueInCentsPast6Months: {
+      type: coda.ValueType.Number,
+      description: 'The total amount received of the collective in cents in the past 6 months.',
+    },
+    contributorsCountPast6Months: {
+      type: coda.ValueType.Number,
+      description: 'The total number of contributors to the collective in the past 6 months.',
+    },
+    contributionsCountPast6Months: {
+      type: coda.ValueType.Number,
+      description: 'The total number of contributions to the collective in the past 6 months.',
+    },
+    totalAmountSpentValueInCentsPast3Months: {
+      type: coda.ValueType.Number,
+      description: 'The total amount spent of the collective in cents in the past 3 months.',
+    },
+    totalAmountReceivedValueInCentsPast3Months: {
+      type: coda.ValueType.Number,
+      description: 'The total amount received of the collective in cents in the past 3 months.',
+    },
+    contributorsCountPast3Months: {
+      type: coda.ValueType.Number,
+      description: 'The total number of contributors to the collective in the past 3 months.',
+    },
+    contributionsCountPast3Months: {
+      type: coda.ValueType.Number,
+      description: 'The total number of contributions to the collective in the past 3 months.',
+    },
+    totalAmountSpentValueInCentsPast1Month: {
+      type: coda.ValueType.Number,
+      description: 'The total amount spent of the collective in cents in the past 1 month.',
+    },
+    totalAmountReceivedValueInCentsPast1Month: {
+      type: coda.ValueType.Number,
+      description: 'The total amount received of the collective in cents in the past 1 month.',
+    },
+    contributorsCountPast1Month: {
+      type: coda.ValueType.Number,
+      description: 'The total number of contributors to the collective in the past 1 month.',
+    },
+    contributionsCountPast1Month: {
+      type: coda.ValueType.Number,
+      description: 'The total number of contributions to the collective in the past 1 month.',
+    },
+    hostFeesStructure: {
+      type: coda.ValueType.String,
+      description: 'The host fees structure of the collective.',
+    },
+    employmentJustWorksCount: {
+      type: coda.ValueType.Number,
+      description: 'The total number of employment payments the collective has made to JustWorks.',
+    },
+    employmentJustWorksExpenses: {
+      type: coda.ValueType.Array,
+      items: ExpenseSchema,
+      description: 'The employment expenses of the collective.',
+    },
+    latestJustWorksPaymentDate: {
+      type: coda.ValueType.String,
+      description: 'The date of the latest employment payment the collective has made to JustWorks.',
+    },
+    cashAssistanceCount: {
+      type: coda.ValueType.Number,
+      description: 'The total number of cash assistance payments the collective has made.',
+    },
+    latestCashAssistancePaymentDate: {
+      type: coda.ValueType.String,
+      description: 'The date of the latest cash assistance payment the collective has made.',
+    },
+  },
+  displayProperty: 'name',
+  idProperty: 'slug',
+});
+
+// Sync tables
+
 // Expenses to host
 pack.addSyncTable({
   name: 'ExpensesToHost',
@@ -599,6 +771,22 @@ pack.addSyncTable({
                 host {
                   slug                }
               } 
+            }
+            comments(limit: 100) {
+              limit
+              offset
+              totalCount
+              nodes {
+                id
+                createdAt
+                html
+                account {
+                  slug
+                }
+                fromAccount {
+                  slug
+                }
+              }
             }
             activities {
               createdAt
@@ -859,10 +1047,6 @@ pack.addSyncTable({
         return false;
       }
 
-      function checkIfMissingReceipt(expense) {
-        return expense.status === 'PAID' && expense.type === 'CHARGE' && expense.items.every(item => !item.url);
-      }
-
       res.nodes.forEach(expense => {
         const row = {
           accountSlug: expense.account.slug,
@@ -876,6 +1060,7 @@ pack.addSyncTable({
             expense.amountV2.valueInCents,
             calculateAccountTransactionPercentiles(expense.account, expense.account.slug),
           ),
+          comments: expense.comments ? expense.comments.nodes : null,
           createdAt: expense.createdAt,
           createdByAccountSlug: expense.createdByAccount.slug,
           createdByAccountEmail: expense.createdByAccount.emails ? expense.createdByAccount.emails[0] : null,
@@ -900,7 +1085,6 @@ pack.addSyncTable({
           daysBetweenCreatedAndPaid: calculateDaysBetweenCreatedAndPaid(expense.activities),
           daysBetweenApprovedAndPaid: calculateDaysBetweenApprovedAndPaid(expense.activities),
           approvedBeforeRejection: checkApprovalBeforeRejection(expense.activities),
-          missingReceipt: checkIfMissingReceipt(expense),
           last100ExpensesValuesInCentsToCollective: getAllTransactionAmounts(expense.account),
           last100ExpensesValuesInCentsToPayee: getAllTransactionAmounts(expense.payee),
           collectiveExpensePercentileRanges: calculateAccountTransactionPercentiles(
@@ -1131,15 +1315,96 @@ pack.addSyncTable({
             isFrozen
             imageUrl
             tags
+            childrenAccounts {
+              totalCount
+              nodes {
+                slug
+                updates(limit: 1) {
+                  limit
+                  totalCount
+                  nodes {
+                    createdAt
+                    title
+                    slug
+                  }
+                }
+              }
+            }
             createdAt
+            ... on AccountWithHost {
+              approvedAt
+              hostFeePercent
+              isActive
+              isApproved
+            }
             location {
+              name 
+              address
               country
+            } 
+            ADMIN_ACTIVITY: transactions(hasExpense: true, includeChildrenTransactions: true, limit: 100) {
+              limit
+              totalCount
+              nodes {
+                expense {
+                  activities {
+                    individual {
+                      slug
+                    }
+                    type
+                  }
+                }
+              }
+            }
+            LAST_EXPENSE: transactions(hasExpense: true, includeChildrenTransactions: true, limit: 1) {
+              limit
+              totalCount
+              nodes {
+                createdAt
+                description
+                expense {
+                  legacyId
+                  amountV2 {
+                    valueInCents
+                    currency
+                  }
+                }
+              }
+            }
+            LAST_CONTRIBUTION: transactions(includeChildrenTransactions: true, hasOrder: true, limit: 1) {
+              limit
+              totalCount
+              nodes {
+                createdAt
+                description
+                amount {
+                  valueInCents
+                  currency
+                }
+              }
+            }
+            LAST_UPDATE: updates(limit: 1) {
+              limit
+              totalCount
+              nodes {
+                createdAt
+                title
+                slug
+              }
             }
             ... on AccountWithHost {
               host {
+                id
                 slug
                 name
               }
+            ... on AccountWithParent {
+              parent {
+                id
+                slug
+                name
+              }
+            }
             approvedAt
             hostFeesStructure
             hostFeePercent
@@ -1154,17 +1419,50 @@ pack.addSyncTable({
                 }
               }
             }
+            JUSTWORKS: transactions(limit: 1000, includeChildrenTransactions: true, hasExpense: true, fromAccount: {slug: "justworks"}) {
+              totalCount
+              nodes {
+                description
+                createdAt
+                amount {
+                  valueInCents
+                  currency
+                }
+              }
+            }
             ALL: stats {
+              expensesTags(includeChildren: true) {
+                amount {
+                  valueInCents
+                  currency
+                }
+                count
+                label
+              }
+              expensesTagsTimeSeries(includeChildren: true, timeUnit: YEAR) {
+                nodes {
+                  amount {
+                    valueInCents
+                    currency
+                  }
+                  date
+                  label
+                }
+              }
               balance {
                   valueInCents
                   currency
               }
               totalAmountSpent(net: true, includeChildren: true) {
                 valueInCents
+                currency
               }
               totalAmountReceived(net: true, includeChildren: true) {
                 valueInCents
+                currency
               }
+              contributionsCount(includeChildren: true)
+              contributorsCount(includeChildren: true)
             }
             PAST_12_MONTHS: stats {
               totalAmountSpent(
@@ -1173,6 +1471,7 @@ pack.addSyncTable({
                 periodInMonths: 12
               ) {
                 valueInCents
+                currency
               }
               totalAmountReceived(
                 net: true
@@ -1180,7 +1479,10 @@ pack.addSyncTable({
                 includeChildren: true
               ) {
                 valueInCents
+                currency
               }
+              contributionsCount(includeChildren: true)
+              contributorsCount(includeChildren: true)
             }
             PAST_9_MONTHS: stats {
               totalAmountSpent(
@@ -1189,6 +1491,7 @@ pack.addSyncTable({
                 periodInMonths: 9
               ) {
                 valueInCents
+                currency
               }
               totalAmountReceived(
                 net: true
@@ -1196,7 +1499,10 @@ pack.addSyncTable({
                 includeChildren: true
               ) {
                 valueInCents
+                currency
               }
+              contributionsCount(includeChildren: true)
+              contributorsCount(includeChildren: true)
             }
             PAST_6_MONTHS: stats {
               totalAmountSpent(
@@ -1205,6 +1511,7 @@ pack.addSyncTable({
                 periodInMonths: 6
               ) {
                 valueInCents
+                currency
               }
               totalAmountReceived(
                 net: true
@@ -1212,7 +1519,10 @@ pack.addSyncTable({
                 includeChildren: true
               ) {
                 valueInCents
+                currency
               }
+              contributionsCount(includeChildren: true)
+              contributorsCount(includeChildren: true)
             }
             PAST_3_MONTHS: stats {
               totalAmountSpent(
@@ -1221,6 +1531,7 @@ pack.addSyncTable({
                 periodInMonths: 3
               ) {
                 valueInCents
+                currency
               }
               totalAmountReceived(
                 net: true
@@ -1228,7 +1539,10 @@ pack.addSyncTable({
                 includeChildren: true
               ) {
                 valueInCents
+                currency
               }
+              contributionsCount(includeChildren: true)
+              contributorsCount(includeChildren: true)
             }
             PAST_MONTH: stats {
               totalAmountSpent(
@@ -1237,6 +1551,7 @@ pack.addSyncTable({
                 periodInMonths: 1
               ) {
                 valueInCents
+                currency
               }
               totalAmountReceived(
                 net: true
@@ -1244,7 +1559,10 @@ pack.addSyncTable({
                 includeChildren: true
               ) {
                 valueInCents
+                currency
               }
+              contributionsCount(includeChildren: true)
+              contributorsCount(includeChildren: true)
             }
           }
         }
@@ -1280,6 +1598,66 @@ pack.addSyncTable({
         };
       }
 
+      function getLatestUpdateDate(data) {
+        // Get latest date from LAST_UPDATE
+        let lastUpdateDate = data.LAST_UPDATE?.totalCount > 0 ? new Date(data.LAST_UPDATE.nodes[0]?.createdAt) : null;
+
+        // Get latest date from childrenAccounts
+        let childrenUpdates =
+          data.childrenAccounts?.nodes
+            ?.filter(child => child.updates?.totalCount > 0)
+            ?.map(child => new Date(child.updates.nodes[0]?.createdAt)) ?? [];
+        let latestChildUpdateDate = childrenUpdates.length > 0 ? new Date(Math.max.apply(null, childrenUpdates)) : null;
+
+        // Compare both dates and return the latest one
+        let latestDate;
+        if (!lastUpdateDate || !latestChildUpdateDate) {
+          latestDate = lastUpdateDate || latestChildUpdateDate;
+        } else {
+          latestDate = lastUpdateDate > latestChildUpdateDate ? lastUpdateDate : latestChildUpdateDate;
+        }
+
+        // Return the date as a string
+        return latestDate ? latestDate.toISOString() : null;
+      }
+
+      function getCountOfExpenseTag(expensesTags, tagName) {
+        for (let i = 0; i < expensesTags.length; i++) {
+          if (expensesTags[i].label === tagName) {
+            return expensesTags[i].count;
+          }
+        }
+        return 0;
+      }
+
+      function countAdminActivities(data, adminSlug) {
+        // Initialize count to 0
+        let count = 0;
+
+        // If data.ADMIN_ACTIVITY.totalCount is 0, return 0
+        if (data.ADMIN_ACTIVITY.totalCount === 0) {
+          return count;
+        }
+
+        data.ADMIN_ACTIVITY.nodes.forEach(adminActivity => {
+          // Loop through each individual activity within the admin activity
+          adminActivity.expense?.activities.forEach(activity => {
+            // Check if the individual's slug matches the given adminSlug
+            // and the activity type is either APPROVED or REJECTED
+            if (
+              activity.individual?.slug === adminSlug &&
+              (activity.type === 'COLLECTIVE_EXPENSE_APPROVED' || activity.type === 'COLLECTIVE_EXPENSE_REJECTED')
+            ) {
+              // Increment the count
+              count++;
+            }
+          });
+        });
+
+        // Return the final count
+        return count;
+      }
+
       rows = rows.map(row => {
         return {
           ...row,
@@ -1289,23 +1667,48 @@ pack.addSyncTable({
               name: node.account.name,
               slug: node.account.slug,
               email: node.account.emails ? node.account.emails[0] : null,
+              approvalCount: countAdminActivities(row, node.account.slug),
             };
           }),
           balanceValueInCents: row.ALL.balance.valueInCents,
           balanceCurrency: row.ALL.balance.currency,
-          totalFinancialContributors: row.ALL.totalFinancialContributors,
+          locationName: row.location ? row.location.name : null,
+          locationCountry: row.location ? row.location.country : null,
+          locationAddress: row.location ? row.location.address : null,
+          isActive: row.isActive,
+          isApproved: row.isApproved,
+          lastUpdateDate: getLatestUpdateDate(row),
+          lastExpenseDate: row?.LAST_EXPENSE?.totalCount > 0 ? row.LAST_EXPENSE.nodes[0]?.createdAt : null,
+          expenseCount: row.LAST_EXPENSE.totalCount,
+          lastContributionDate:
+            row?.LAST_CONTRIBUTION?.totalCount > 0 ? row.LAST_CONTRIBUTION.nodes[0]?.createdAt : null,
+          employmentJustWorksCount: row?.JUSTWORKS ? row.JUSTWORKS.totalCount : null,
+          employmentJustWorksExpenses: row.JUSTWORKS ? row.JUSTWORKS.nodes : null,
+          cashAssistanceCount: getCountOfExpenseTag(row.ALL.expensesTags, 'cash assistance'),
+          contributorsCount: row.ALL.contributorsCount,
+          contributionsCount: row.ALL.contributionsCount,
           totalAmountSpentValueInCents: row.ALL.totalAmountSpent.valueInCents,
           totalAmountReceivedValueInCents: row.ALL.totalAmountReceived.valueInCents,
           totalAmountSpentValueInCentsPast12Months: row.PAST_12_MONTHS.totalAmountSpent.valueInCents,
           totalAmountReceivedValueInCentsPast12Months: row.PAST_12_MONTHS.totalAmountReceived.valueInCents,
+          contributorsCountPast12Months: row.PAST_12_MONTHS.contributorsCount,
+          contributionsCountPast12Months: row.PAST_12_MONTHS.contributionsCount,
           totalAmountSpentValueInCentsPast9Months: row.PAST_9_MONTHS.totalAmountSpent.valueInCents,
           totalAmountReceivedValueInCentsPast9Months: row.PAST_9_MONTHS.totalAmountReceived.valueInCents,
+          contributorsCountPast9Months: row.PAST_9_MONTHS.contributorsCount,
+          contributionsCountPast9Months: row.PAST_9_MONTHS.contributionsCount,
           totalAmountSpentValueInCentsPast6Months: row.PAST_6_MONTHS.totalAmountSpent.valueInCents,
           totalAmountReceivedValueInCentsPast6Months: row.PAST_6_MONTHS.totalAmountReceived.valueInCents,
+          contributorsCountPast6Months: row.PAST_6_MONTHS.contributorsCount,
+          contributionsCountPast6Months: row.PAST_6_MONTHS.contributionsCount,
           totalAmountSpentValueInCentsPast3Months: row.PAST_3_MONTHS.totalAmountSpent.valueInCents,
           totalAmountReceivedValueInCentsPast3Months: row.PAST_3_MONTHS.totalAmountReceived.valueInCents,
+          contributorsCountPast3Months: row.PAST_3_MONTHS.contributorsCount,
+          contributionsCountPast3Months: row.PAST_3_MONTHS.contributionsCount,
           totalAmountSpentValueInCentsPastMonth: row.PAST_MONTH.totalAmountSpent.valueInCents,
           totalAmountReceivedValueInCentsPastMonth: row.PAST_MONTH.totalAmountReceived.valueInCents,
+          contributorsCountPastMonth: row.PAST_MONTH.contributorsCount,
+          contributionsCountPastMonth: row.PAST_MONTH.contributionsCount,
         };
       });
 
