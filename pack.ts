@@ -1679,12 +1679,14 @@ pack.addSyncTable({
               approvalCount: countAdminActivities(row, node.account.slug),
             };
           }),
-          socialLinks: row.socialLinks ? row.socialLinks.map(link => {
-            return {
-                type: link.type,
-                url: link.url,
-            };
-            }) : [],        
+          socialLinks: row.socialLinks
+            ? row.socialLinks.map(link => {
+                return {
+                  type: link.type,
+                  url: link.url,
+                };
+              })
+            : [],
           balanceValueInCents: row.ALL.balance.valueInCents,
           balanceCurrency: row.ALL.balance.currency,
           locationName: row.location ? row.location.name : null,
