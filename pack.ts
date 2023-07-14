@@ -1302,6 +1302,26 @@ pack.addSyncTable({
     execute: async function (args, context) {
       const [slug, limit] = args;
 
+      const dateOneMonthAgo = new Date();
+      dateOneMonthAgo.setMonth(dateOneMonthAgo.getMonth() - 1);
+      const oneMonthAgo = dateOneMonthAgo.toISOString().replace(/\.\d+Z$/, 'Z');
+
+      const dateThreeMonthsAgo = new Date();
+      dateThreeMonthsAgo.setMonth(dateThreeMonthsAgo.getMonth() - 3);
+      const threeMonthsAgo = dateThreeMonthsAgo.toISOString().replace(/\.\d+Z$/, 'Z');
+
+      const dateSixMonthsAgo = new Date();
+      dateSixMonthsAgo.setMonth(dateSixMonthsAgo.getMonth() - 6);
+      const sixMonthsAgo = dateSixMonthsAgo.toISOString().replace(/\.\d+Z$/, 'Z');
+    
+      const dateNineMonthsAgo = new Date();
+      dateNineMonthsAgo.setMonth(dateNineMonthsAgo.getMonth() - 9);
+      const nineMonthsAgo = dateNineMonthsAgo.toISOString().replace(/\.\d+Z$/, 'Z');
+
+      const dateTwelveMonthsAgo = new Date();
+      dateTwelveMonthsAgo.setMonth(dateTwelveMonthsAgo.getMonth() - 12);
+      const twelveMonthsAgo = dateTwelveMonthsAgo.toISOString().replace(/\.\d+Z$/, 'Z');
+
       const query = `
       query SearchAccounts(
         $host: [AccountReferenceInput]
@@ -1477,101 +1497,101 @@ pack.addSyncTable({
               totalAmountSpent(
                 net: true
                 includeChildren: true
-                periodInMonths: 12
+                dateFrom: "${twelveMonthsAgo}"
               ) {
                 valueInCents
                 currency
               }
               totalAmountReceived(
                 net: true
-                periodInMonths: 12
+                dateFrom: "${twelveMonthsAgo}"
                 includeChildren: true
               ) {
                 valueInCents
                 currency
               }
-              contributionsCount(includeChildren: true)
-              contributorsCount(includeChildren: true)
+              contributionsCount(includeChildren: true, dateFrom: "${twelveMonthsAgo}")
+              contributorsCount(includeChildren: true, dateFrom: "${twelveMonthsAgo}")
             }
             PAST_9_MONTHS: stats {
               totalAmountSpent(
                 net: true
                 includeChildren: true
-                periodInMonths: 9
+                dateFrom: "${nineMonthsAgo}"
               ) {
                 valueInCents
                 currency
               }
               totalAmountReceived(
                 net: true
-                periodInMonths: 9
+                dateFrom: "${nineMonthsAgo}"
                 includeChildren: true
               ) {
                 valueInCents
                 currency
               }
-              contributionsCount(includeChildren: true)
-              contributorsCount(includeChildren: true)
+              contributionsCount(includeChildren: true, dateFrom: "${nineMonthsAgo}")
+              contributorsCount(includeChildren: true, dateFrom: "${nineMonthsAgo}")
             }
             PAST_6_MONTHS: stats {
               totalAmountSpent(
                 net: true
                 includeChildren: true
-                periodInMonths: 6
+                dateFrom: "${sixMonthsAgo}"
               ) {
                 valueInCents
                 currency
               }
               totalAmountReceived(
                 net: true
-                periodInMonths: 6
+                dateFrom: "${sixMonthsAgo}"
                 includeChildren: true
               ) {
                 valueInCents
                 currency
               }
-              contributionsCount(includeChildren: true)
-              contributorsCount(includeChildren: true)
+              contributionsCount(includeChildren: true, dateFrom: "${sixMonthsAgo}")
+              contributorsCount(includeChildren: true, dateFrom: "${sixMonthsAgo}")
             }
             PAST_3_MONTHS: stats {
               totalAmountSpent(
                 net: true
                 includeChildren: true
-                periodInMonths: 3
+                dateFrom: "${threeMonthsAgo}"
               ) {
                 valueInCents
                 currency
               }
               totalAmountReceived(
                 net: true
-                periodInMonths: 3
+                dateFrom: "${threeMonthsAgo}"
                 includeChildren: true
               ) {
                 valueInCents
                 currency
               }
-              contributionsCount(includeChildren: true)
-              contributorsCount(includeChildren: true)
+              contributionsCount(includeChildren: true, dateFrom: "${threeMonthsAgo}")
+              contributorsCount(includeChildren: true, dateFrom: "${threeMonthsAgo}")
             }
             PAST_MONTH: stats {
               totalAmountSpent(
                 net: true
                 includeChildren: true
-                periodInMonths: 1
+                dateFrom: "${oneMonthAgo}"
               ) {
                 valueInCents
                 currency
               }
               totalAmountReceived(
                 net: true
-                periodInMonths: 1
+                dateFrom: "${oneMonthAgo}"
                 includeChildren: true
               ) {
                 valueInCents
                 currency
               }
-              contributionsCount(includeChildren: true)
-              contributorsCount(includeChildren: true)
+              contributionsCount(includeChildren: true, dateFrom: "${oneMonthAgo}")
+              contributorsCount(includeChildren: true, dateFrom: "${oneMonthAgo}")
             }
           }
         }
