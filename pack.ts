@@ -550,6 +550,10 @@ const CollectiveSchema = coda.makeObjectSchema({
       type: coda.ValueType.String,
       description: 'The date of the last update.',
     },
+    lastUpdateSlug: {
+      type: coda.ValueType.String,
+      description: 'The slug of the last update.',
+    },
     lastContributionDate: {
       type: coda.ValueType.String,
       description: 'The date of the last contribution.',
@@ -1715,6 +1719,7 @@ pack.addSyncTable({
           isActive: row.isActive,
           isApproved: row.isApproved,
           lastUpdateDate: getLatestUpdateDate(row),
+          lastUpdateSlug: row.LAST_UPDATE?.totalCount > 0 ? row.LAST_UPDATE.nodes[0]?.slug : null,
           lastExpenseDate: row?.LAST_EXPENSE?.totalCount > 0 ? row.LAST_EXPENSE.nodes[0]?.createdAt : null,
           expenseCount: row.LAST_EXPENSE.totalCount,
           lastContributionDate:
