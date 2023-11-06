@@ -245,6 +245,18 @@ const ExpenseSchema = coda.makeObjectSchema({
       type: coda.ValueType.Number,
       description: 'The amount of the expense in cents.',
     },
+    netAmountValueInCents: {
+      type: coda.ValueType.Number,
+      description: 'The net amount of the expense in cents.',
+    },
+    paymentProcessorFeeValueInCents: {
+      type: coda.ValueType.Number,
+      description: 'The payment processor fee of the expense in cents.',
+    },
+    taxAmountValueInCents: {
+      type: coda.ValueType.Number,
+      description: 'The tax amount of the expense in cents.',
+    },
     amountCurrency: {
       type: coda.ValueType.String,
       description: 'The currency of the expense amount.',
@@ -265,6 +277,10 @@ const ExpenseSchema = coda.makeObjectSchema({
     createdAt: {
       type: coda.ValueType.String,
       description: 'The date the expense was created.',
+    },
+    paidAt: {
+      type: coda.ValueType.String,
+      description: 'The date the expense was paid.',
     },
     createdByAccountSlug: {
       type: coda.ValueType.String,
@@ -553,6 +569,10 @@ const CollectiveSchema = coda.makeObjectSchema({
     lastUpdateSlug: {
       type: coda.ValueType.String,
       description: 'The slug of the last update.',
+    },
+    lastUpdateTitle: {
+      type: coda.ValueType.String,
+      description: 'The title of the last update.',
     },
     lastContributionDate: {
       type: coda.ValueType.String,
@@ -1101,6 +1121,333 @@ pack.addSyncTable({
             expense.account.slug,
           ),
           payeeExpensePercentileRanges: calculateAccountTransactionPercentiles(expense.payee, expense.payee.slug),
+        };
+        rows.push(row);
+      });
+
+      return {
+        result: rows,
+        continuation: continuation,
+      };
+    },
+  },
+});
+
+// Expenses to collective
+pack.addSyncTable({
+  name: 'ExpensesToCollective',
+  description: 'Lists all expenses to collective.',
+  identityName: 'ExpenseToCollective',
+  schema: ExpenseSchema,
+  formula: {
+    name: 'SyncExpensesToCollective',
+    description: 'Syncs expenses to collective.',
+    parameters: [
+      coda.makeParameter({
+        type: coda.ParameterType.String,
+        name: 'slug',
+        description: 'The slug of the collective you want to retrieve expenses from.',
+      }),
+      coda.makeParameter({
+        type: coda.ParameterType.Number,
+        name: 'limit',
+        optional: true,
+        description: 'The number of expenses you want to retrieve per request.',
+      }),
+      coda.makeParameter({
+        type: coda.ParameterType.Number,
+        name: 'days',
+        optional: true,
+        description: 'The number of days you want to retrieve expenses from.',
+      }),
+      coda.makeParameter({
+        type: coda.ParameterType.String,
+        name: 'status',
+        optional: true,
+        description: 'The status of expenses you want to retrieve.',
+      }),
+      coda.makeParameter({
+        type: coda.ParameterType.Boolean,
+        name: 'withChildren',
+        optional: true,
+        description: 'Whether to include expenses from child collectives.',
+      }),
+    ],
+    execute: async function (args, context) {
+      const [slug, limit, days, status, withChildren] = args;
+
+      const query = `
+      query searchExpenses(
+        $account: AccountReferenceInput, 
+        $status: ExpenseStatusFilter,
+        $dateFrom: DateTime,
+        $withChildren: Boolean,
+        $limit: Int, 
+        $offset: Int
+        ) 
+        {
+        expenses(account: $account, dateFrom: $dateFrom, limit: $limit, offset: $offset, status: $status, includeChildrenExpenses: $withChildren) {
+          limit
+          offset
+          totalCount
+          nodes {
+            account {
+              slug
+              name
+              ... on AccountWithParent {
+                parent {
+                  slug
+                  name
+                }
+              }
+              ... on AccountWithHost {
+                host {
+                  slug                }
+              } 
+            }
+            activities {
+              createdAt
+              data
+              fromAccount {
+                slug
+                emails
+              }
+              isSystem
+              type
+              individual {
+                id
+                type
+                slug
+                name
+                imageUrl
+                
+              }
+              transaction {
+                id
+                amount {
+                  valueInCents
+                  currency
+                  
+                }
+                platformFee {
+                  valueInCents
+                  currency
+                  
+                }
+                hostFee {
+                  valueInCents
+                  currency
+                  
+                }
+                paymentProcessorFee {
+                  valueInCents
+                  currency
+                  
+                }
+                netAmount {
+                  valueInCents
+                  currency
+                  
+                }
+                taxAmount {
+                  valueInCents
+                  currency
+                  
+                }
+                taxInfo {
+                  id
+                  rate
+                  type
+                  percentage
+                  
+                }
+                fromAccount {
+                  id
+                  slug
+                  name
+                  ... on AccountWithHost {
+                    hostFeePercent
+                    
+                  }
+                  
+                }
+                toAccount {
+                  id
+                  slug
+                  name
+                  ... on AccountWithHost {
+                    hostFeePercent
+                    
+                  }
+                  
+                }
+                expense {
+                  id
+                  currency
+                  amount
+                  
+                }
+                
+              }
+            }
+            amountV2(currencySource: ACCOUNT) {
+              valueInCents
+            }
+            createdAt
+            createdByAccount {
+              slug
+              emails
+            }
+            currency
+            description
+            id
+            legacyId
+            payee {
+              slug
+              emails
+              type
+            }
+            payoutMethod {
+              id
+              type
+              name
+            }
+            status
+            tags
+            type
+            virtualCard {
+              id
+              name
+              assignee {
+                slug
+              }
+              account {
+                slug
+              }
+            }
+          }
+        }
+      }      
+      `;
+
+      let offset = 0;
+      if (context.sync.continuation) {
+        offset = context.sync.continuation.offset as number;
+      }
+
+      // Only include dateFrom and status in the variables if they're not undefined or blank.
+      type VariablesType = {
+        account: { slug: string };
+        limit: number;
+        offset: number;
+        dateFrom?: string;
+        status?: string;
+        withChildren?: boolean;
+      };
+
+      const account = { slug: slug };
+
+      const variables: VariablesType = { account, limit, offset };
+
+      let dateFrom;
+      if (days) {
+        const today = new Date();
+        const daysAgo = new Date(today.getTime() - days * 24 * 60 * 60 * 1000);
+        dateFrom = `${daysAgo.toISOString().split('.')[0]}Z`;
+      }
+
+      if (dateFrom) {
+        variables.dateFrom = dateFrom;
+      }
+      if (status) {
+        variables.status = status;
+      }
+      if (withChildren) {
+        variables.withChildren = withChildren;
+      }
+
+      const response = await context.fetcher.fetch({
+        method: 'POST',
+        url: 'https://api.opencollective.com/graphql/v2',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ query, variables }),
+      });
+
+      const res = await response.body.data.expenses;
+      const rows = [];
+      const total = res.totalCount as number;
+      const new_offset = res.offset as number;
+
+      let continuation;
+      if (limit + new_offset < total) {
+        continuation = {
+          offset: new_offset + limit,
+        };
+      }
+
+      function paidDate(expense) {
+        if (!expense.activities) {
+          return null;
+        }
+        const paid = expense.activities.find(activity => activity.type === 'COLLECTIVE_EXPENSE_PAID');
+        if (paid) {
+          return paid.createdAt;
+        }
+        return null;
+      }
+
+      function getExpenseAmounts(expense) {
+        if (expense.activities && expense.activities.find(activity => activity.type === 'COLLECTIVE_EXPENSE_PAID')) {
+          const paid_activity = expense.activities.find(activity => activity.type === 'COLLECTIVE_EXPENSE_PAID');
+          return {
+            netAmount: paid_activity.transaction?.netAmount?.valueInCents? paid_activity.transaction.netAmount.valueInCents : 0,
+            amount: paid_activity.transaction?.amount?.valueInCent? paid_activity.transaction.amount.valueInCents : 0,
+            paymentProcessorFee: paid_activity.transaction?.paymentProcessorFee?.valueInCents? paid_activity.transaction.paymentProcessorFee.valueInCents : 0,
+            taxAmount: paid_activity.transaction?.taxAmount?.valueInCents? paid_activity.transaction.taxAmount.valueInCents : 0,
+            currency: paid_activity.transaction?.netAmount?.currency? paid_activity.transaction.netAmount.currency : null,
+          };
+        }
+        return {
+          netAmount: expense.amountV2.valueInCents,
+          amount: expense.amountV2.valueInCents,
+          paymentProcessorFee: 0,
+          taxAmount: 0,
+          currency: expense.currency,
+        };
+      }
+
+      res.nodes.forEach(expense => {
+        const row = {
+          accountSlug: expense.account?.slug? expense.account.slug : null,
+          accountName: expense.account?.name? expense.account.name : null,
+          accountParentSlug: expense.account.parent?.slug? expense.account.parent.slug : null,
+          accountParentName: expense.account.parent?.slug? expense.account.parent.name : null,
+          accountHostSlug: expense.account.host ? expense.account.host.slug : null,
+          amountValueInCents: getExpenseAmounts(expense).amount,
+          netAmountValueInCents: getExpenseAmounts(expense).netAmount,
+          paymentProcessorFeeValueInCents: getExpenseAmounts(expense).paymentProcessorFee,
+          taxAmountValueInCents: getExpenseAmounts(expense).taxAmount,
+          amountCurrency: getExpenseAmounts(expense).currency,
+          createdAt: expense.createdAt,
+          paidAt: paidDate(expense) ? paidDate(expense) : null,
+          createdByAccountSlug: expense.createdByAccount?.slug? expense.createdByAccount.slug : null,
+          createdByAccountEmail: expense.createdByAccount?.emails? expense.createdByAccount.emails[0] : null,
+          description: expense.description,
+          id: expense.id,
+          legacyId: expense.legacyId,
+          payeeSlug: expense.payee?.slug? expense.payee.slug : null,
+          payeeEmails: expense.payee.emails ? expense.payee.emails[0] : null,
+          payeeType: expense.payee.type,
+          payoutMethodName: expense.payoutMethod ? expense.payoutMethod.name : null,
+          payoutMethodType: expense.payoutMethod ? expense.payoutMethod.type : null,
+          status: expense.status,
+          tags: expense.tags,
+          virtualCardId: expense.virtualCard ? expense.virtualCard.id : null,
+          virtualCardName: expense.virtualCard ? expense.virtualCard.name : null,
+          virtualCardAssigneeSlug: expense.virtualCard?.assignee?.slug? expense.virtualCard.assignee.slug : null,
+          virtualCardAccountSlug: expense.virtualCard?.account?.slug? expense.virtualCard.account.slug : null,
         };
         rows.push(row);
       });
@@ -1720,6 +2067,7 @@ pack.addSyncTable({
           isApproved: row.isApproved,
           lastUpdateDate: getLatestUpdateDate(row),
           lastUpdateSlug: row.LAST_UPDATE?.totalCount > 0 ? row.LAST_UPDATE.nodes[0]?.slug : null,
+          lastUpdateTitle: row.LAST_UPDATE?.totalCount > 0 ? row.LAST_UPDATE.nodes[0]?.title : null,
           lastExpenseDate: row?.LAST_EXPENSE?.totalCount > 0 ? row.LAST_EXPENSE.nodes[0]?.createdAt : null,
           expenseCount: row.LAST_EXPENSE.totalCount,
           lastContributionDate:
